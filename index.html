@@ -639,7 +639,6 @@
             document.getElementById('app-nav').classList.remove('hidden');
             document.getElementById('user-name-display').innerText = profile.full_name;
             
-            // Format label role agar bersih (Super Admin, Admin Subbagian, atau OP)
             let formattedRole = profile.role.toUpperCase();
             if (profile.role === 'admin_subunit') formattedRole = 'ADMIN SUBBAGIAN';
             if (profile.role === 'operator') formattedRole = 'OP';
@@ -705,7 +704,6 @@
             });
         }
 
-        // --- MANAJEMEN AGENDA DI MENU "MANAJEMEN APP" ---
         async function loadManageAgendas() {
             const tbody = document.getElementById('manage-agendas-body');
             tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500">Memuat daftar agenda...</td></tr>`;
@@ -773,7 +771,6 @@
             });
         }
 
-        // Modal konfirmasi custom untuk hapus agenda
         async function deleteAgenda(id) {
             showConfirmModal("Apakah Anda yakin ingin menghapus agenda rapat ini beserta seluruh rencana kerja di dalamnya?", "Konfirmasi Hapus Agenda", async () => {
                 await _supabase.from('work_plans').delete().eq('meeting_id', id);
@@ -802,7 +799,6 @@
             });
         }
 
-        // --- MANAJEMEN AKUN & PENGGUNA ---
         async function loadSignupRequests() {
             const tbody = document.getElementById('signup-requests-body');
             tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Memuat data pengguna...</td></tr>`;
@@ -951,7 +947,6 @@
             });
         }
 
-        // --- LOGIKA EDIT ROLE PENGGUNA ---
         async function openEditRoleModal(userId, fullName, currentRole, currentSubunitId) {
             document.getElementById('edit-role-user-id').value = userId;
             document.getElementById('edit-role-user-subtitle').innerText = `Edit akses untuk: ${fullName}`;
@@ -1011,7 +1006,6 @@
             showCustomAlert('Status akun berhasil diperbarui!', 'Berhasil', 'success', () => loadSignupRequests());
         }
 
-        // --- MODAL KONFIRMASI CUSTOM (PENGGANTI CONFIRM BAWAAN) ---
         function showConfirmModal(message, title = "Konfirmasi", callback) {
             const modal = document.getElementById('modal-custom-alert');
             document.getElementById('custom-alert-title').innerText = title;
@@ -1045,7 +1039,6 @@
             });
         }
 
-        // --- INISIALISASI & LOGIKA PAGING PADA TAB RAPAT ---
         async function initRapatTab() {
             currentPage = 1;
             await populatePeriodFilter();
@@ -1115,7 +1108,6 @@
         async function renderPagedMeetings() {
             const container = document.getElementById('meetings-list-container');
             
-            // Filter meeting berdasarkan subbagian jika bukan super_admin
             let filteredMeetings = allMeetingsCache;
             if (currentUserProfile && currentUserProfile.role !== 'super_admin') {
                 filteredMeetings = allMeetingsCache.filter(m => m.sub_unit_id === currentUserProfile.sub_unit_id);
@@ -1153,8 +1145,6 @@
                         if (w.status === 'Selesai') statusBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
                         if (w.status === 'Batal') statusBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
 
-                        // Cek apakah user berhak mengedit/menghapus baris ini 
-                        // (Admin Subbagian bisa edit semua di subbagiannya, OP hanya miliknya sendiri)
                         let canModifyWork = (currentUserProfile.role === 'super_admin' || currentUserProfile.role === 'admin_subunit' || w.user_id === currentUserProfile.id);
 
                         let actionButtons = `<button onclick="openStatusModal('${w.id}')" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium underline underline-offset-2">Edit Status</button>`;
@@ -1206,27 +1196,6 @@
                     </div>
                 `;
             }
-
-            document.getElementById('pagination-info').innerText = `Menampilkan agenda ${startIndex + 1} - ${Math.min(endIndex, totalItems)} dari total ${totalItems} agenda`;
-            
-            let btnHtml = `
-                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="px-3 py-1.5 rounded-xl bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed"' : 'class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"'}>Sebelumnya</button>
-            `;
-
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === currentPage) {
-                    btnHtml += `<button class="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-semibold shadow-md shadow-blue-600/20">${i}</button>`;
-                } else {
-                    btnHtml += `<button onclick="changePage(${i})" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition">${i}</button>`;
-                }
-            }
-
-            btnHtml += `
-                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled class="px-3 py-1.5 rounded-xl bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed"' : 'class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"'}>Selanjutnya</button>
-            `;
-
-            document.getElementById('pagination-buttons').innerHTML = btnHtml;
-        }
 
             document.getElementById('pagination-info').innerText = `Menampilkan agenda ${startIndex + 1} - ${Math.min(endIndex, totalItems)} dari total ${totalItems} agenda`;
             
