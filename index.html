@@ -1145,11 +1145,21 @@
                         if (w.status === 'Selesai') statusBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
                         if (w.status === 'Batal') statusBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
 
-                        let canModifyWork = (currentUserProfile.role === 'super_admin' || currentUserProfile.role === 'admin_subunit' || w.user_id === currentUserProfile.id);
+                        // Cek hak akses: Admin Subbagian bisa ubah/hapus semua di subbagiannya. OP hanya miliknya sendiri.
+                        let isOwner = (w.user_id === currentUserProfile.id);
+                        let isAdminSub = (currentUserProfile.role === 'admin_subunit' || currentUserProfile.role === 'super_admin');
+                        let canModify = isAdminSub || isOwner;
 
-                        let actionButtons = `<button onclick="openStatusModal('${w.id}')" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium underline underline-offset-2">Edit Status</button>`;
+                        // Tombol Edit Status: OP hanya bisa edit status miliknya sendiri, Admin Subbagian bisa semua
+                        let actionButtons = '';
+                        if (canModify) {
+                            actionButtons += `<button onclick="openStatusModal('${w.id}')" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium underline underline-offset-2">Edit Status</button>`;
+                        } else {
+                            actionButtons += `<span class="text-xs text-slate-500 italic">Hanya Lihat</span>`;
+                        }
                         
-                        if (canModifyWork) {
+                        // Tombol Hapus: Hanya muncul jika Admin Subbagian atau pemilik asli rencana kerja tersebut
+                        if (canModify) {
                             actionButtons += ` <span class="text-slate-600">|</span> <button onclick="deleteWorkPlan('${w.id}')" class="text-xs text-rose-400 hover:text-rose-300 font-medium underline underline-offset-2">Hapus</button>`;
                         }
 
