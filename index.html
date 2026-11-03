@@ -155,7 +155,7 @@
             </div>
         </div>
 
-        <!-- 6. TAB 4: ARsip -->
+        <!-- 6. TAB 4: ARSIP -->
         <div id="tab-arsip" class="hidden space-y-6">
             <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
                 <h2 class="text-lg font-bold text-slate-100">Arsip & Riwayat Rapat</h2>
@@ -577,6 +577,7 @@
                 
                 await _supabase.from('profiles').insert({
                     id: session.user.id,
+                    email: session.user.email,
                     full_name: fullName,
                     role: 'operator',
                     is_active: false
@@ -750,22 +751,19 @@
             });
         }
 
-        // --- MANAJEMEN AKUN & PENGGUNA (DIAMANKAN & DISINKRONKAN) ---
+        // --- MANAJEMEN AKUN & PENGGUNA ---
         async function loadSignupRequests() {
             const tbody = document.getElementById('signup-requests-body');
             tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Memuat data pengguna...</td></tr>`;
 
-            // 1. Ambil data signup_requests
             let { data: requests, error: reqError } = await _supabase
                 .from('signup_requests')
                 .select('*');
 
-            // 2. Ambil data profiles
             let { data: profiles, error: profError } = await _supabase
                 .from('profiles')
                 .select('*');
 
-            // 3. Ambil data sub_units
             let { data: subUnits } = await _supabase
                 .from('sub_units')
                 .select('id, name');
@@ -794,7 +792,6 @@
                 return;
             }
 
-            // Saring agar akun 'super_admin' milik Anda tidak ikut tampil
             const filteredRequests = requests.filter(r => {
                 let prof = profileMap[r.user_id];
                 return !prof || prof.role !== 'super_admin';
@@ -871,7 +868,7 @@
                 return;
             }
 
-            // Ambil email dari tabel signup_requests berdasarkan userId agar tidak null
+            // Ambil email dari signup_requests agar tidak null
             let { data: reqData } = await _supabase
                 .from('signup_requests')
                 .select('email, full_name')
@@ -881,7 +878,6 @@
             const userEmail = reqData ? reqData.email : '';
             const fullName = reqData ? reqData.full_name : 'Pengguna';
 
-            // Kirim data ke tabel profiles dengan menyertakan email & full_name
             const { error: profError } = await _supabase.from('profiles').upsert({
                 id: userId,
                 email: userEmail,
