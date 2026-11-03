@@ -252,6 +252,39 @@
         </div>
     </div>
 
+    <!-- CUSTOM PREMIUM MODAL: EDIT ROLE AKUN PENGGUNA -->
+    <div id="modal-edit-role" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl shadow-black/80">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <div>
+                    <h3 class="font-bold text-slate-100 text-base">Ubah Role & Subbagian</h3>
+                    <p id="edit-role-user-subtitle" class="text-xs text-slate-400 mt-0.5">Perbarui hak akses pengguna</p>
+                </div>
+                <button onclick="closeEditRoleModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">&times;</button>
+            </div>
+            <form id="form-edit-role" onsubmit="submitEditRole(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="edit-role-user-id">
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Pilih Role / Hak Akses</label>
+                    <select id="edit-role-select" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                        <option value="operator">OP Subbagian (Operator)</option>
+                        <option value="admin_subunit">Admin Subbagian</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Pilih Subbagian</label>
+                    <select id="edit-role-subunit" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                        <option value="">-- Pilih Subbagian --</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeEditRoleModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-xl transition font-medium">Batal</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl transition font-medium shadow-lg shadow-blue-600/30">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- CUSTOM PREMIUM MODAL: TAMBAH AGENDA RAPAT -->
     <div id="modal-add-agenda" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl shadow-black/80">
@@ -734,20 +767,21 @@
             });
         }
 
+        // Modal konfirmasi custom untuk hapus agenda
         async function deleteAgenda(id) {
-            if (!confirm("Apakah Anda yakin ingin menghapus agenda rapat ini beserta seluruh rencana kerja di dalamnya?")) return;
+            showConfirmModal("Apakah Anda yakin ingin menghapus agenda rapat ini beserta seluruh rencana kerja di dalamnya?", "Konfirmasi Hapus Agenda", async () => {
+                await _supabase.from('work_plans').delete().eq('meeting_id', id);
 
-            await _supabase.from('work_plans').delete().eq('meeting_id', id);
+                const { error } = await _supabase.from('meetings').delete().eq('id', id);
+                if (error) {
+                    showCustomAlert('Gagal menghapus agenda: ' + error.message, 'Kesalahan', 'error');
+                    return;
+                }
 
-            const { error } = await _supabase.from('meetings').delete().eq('id', id);
-            if (error) {
-                showCustomAlert('Gagal menghapus agenda: ' + error.message, 'Kesalahan', 'error');
-                return;
-            }
-
-            showCustomAlert('Agenda rapat berhasil dihapus!', 'Berhasil', 'success', () => {
-                loadManageAgendas();
-                loadMeetingsCount();
+                showCustomAlert('Agenda rapat berhasil dihapus!', 'Berhasil', 'success', () => {
+                    loadManageAgendas();
+                    loadMeetingsCount();
+                });
             });
         }
 
@@ -820,7 +854,8 @@
                 if (!isActive) {
                     actionBtns += `<button onclick="openApproveModal('${userId}', '${fullName}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-medium transition shadow-sm mr-2">Setujui</button>`;
                 } else {
-                    actionBtns += `<button onclick="toggleUserStatus('${userId}', false)" class="bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-medium transition mr-2">Nonaktifkan</button>`;
+                    actionBtns += `<button onclick="toggleUserStatus('${userId}', false)" class="bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-medium transition mr-1.5">Nonaktifkan</button>`;
+                    actionBtns += `<button onclick="openEditRoleModal('${userId}', '${fullName}', '${prof.role || 'operator'}', '${prof.sub_unit_id || ''}')" class="bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 px-3 py-1.5 rounded-xl text-xs font-medium transition mr-1.5">Edit Role</button>`;
                 }
                 actionBtns += `<button onclick="deleteUser('${userId}', '${fullName}')" class="bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 px-3 py-1.5 rounded-xl text-xs font-medium transition">Hapus</button>`;
 
@@ -868,7 +903,6 @@
                 return;
             }
 
-            // Ambil email dari signup_requests agar tidak null
             let { data: reqData } = await _supabase
                 .from('signup_requests')
                 .select('email, full_name')
@@ -900,6 +934,57 @@
             });
         }
 
+        // --- LOGIKA EDIT ROLE PENGGUNA ---
+        async function openEditRoleModal(userId, fullName, currentRole, currentSubunitId) {
+            document.getElementById('edit-role-user-id').value = userId;
+            document.getElementById('edit-role-user-subtitle').innerText = `Edit akses untuk: ${fullName}`;
+            document.getElementById('edit-role-select').value = currentRole;
+
+            let { data: subUnits } = await _supabase.from('sub_units').select('*').order('name');
+            const selSub = document.getElementById('edit-role-subunit');
+            selSub.innerHTML = `<option value="">-- Pilih Subbagian --</option>`;
+            if (subUnits) {
+                subUnits.forEach(su => {
+                    let selected = (su.id === currentSubunitId) ? 'selected' : '';
+                    selSub.innerHTML += `<option value="${su.id}" ${selected}>${su.name}</option>`;
+                });
+            }
+
+            document.getElementById('modal-edit-role').classList.remove('hidden');
+        }
+
+        function closeEditRoleModal() {
+            document.getElementById('modal-edit-role').classList.add('hidden');
+            document.getElementById('form-edit-role').reset();
+        }
+
+        async function submitEditRole(event) {
+            event.preventDefault();
+            const userId = document.getElementById('edit-role-user-id').value;
+            const newRole = document.getElementById('edit-role-select').value;
+            const newSubunitId = document.getElementById('edit-role-subunit').value;
+
+            if (!newSubunitId) {
+                showCustomAlert('Silakan pilih subbagian terlebih dahulu!', 'Perhatian', 'error');
+                return;
+            }
+
+            const { error } = await _supabase.from('profiles').update({
+                role: newRole,
+                sub_unit_id: newSubunitId
+            }).eq('id', userId);
+
+            if (error) {
+                showCustomAlert('Gagal memperbarui role: ' + error.message, 'Kesalahan', 'error');
+                return;
+            }
+
+            showCustomAlert('Role dan subbagian pengguna berhasil diperbarui!', 'Berhasil', 'success', () => {
+                closeEditRoleModal();
+                loadSignupRequests();
+            });
+        }
+
         async function toggleUserStatus(userId, makeActive) {
             const { error } = await _supabase.from('profiles').update({ is_active: makeActive }).eq('id', userId);
             if (error) {
@@ -909,13 +994,38 @@
             showCustomAlert('Status akun berhasil diperbarui!', 'Berhasil', 'success', () => loadSignupRequests());
         }
 
+        // --- MODAL KONFIRMASI CUSTOM (PENGGANTI CONFIRM BAWAAN) ---
+        function showConfirmModal(message, title = "Konfirmasi", callback) {
+            const modal = document.getElementById('modal-custom-alert');
+            document.getElementById('custom-alert-title').innerText = title;
+            document.getElementById('custom-alert-message').innerText = message;
+            const iconEl = document.getElementById('custom-alert-icon');
+            
+            iconEl.className = "w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto text-2xl font-bold";
+            iconEl.innerText = "!";
+
+            const btnContainer = document.querySelector('#modal-custom-alert .pt-2');
+            btnContainer.innerHTML = `
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="closeCustomAlert()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-2.5 px-4 rounded-xl transition">Batal</button>
+                    <button id="custom-confirm-yes" class="w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2.5 px-4 rounded-xl transition shadow-lg shadow-rose-600/30">Ya, Hapus</button>
+                </div>
+            `;
+            document.getElementById('custom-confirm-yes').onclick = () => {
+                closeCustomAlert();
+                if (callback) callback();
+            };
+
+            modal.classList.remove('hidden');
+        }
+
         async function deleteUser(userId, fullName) {
-            if (!confirm(`Apakah Anda yakin ingin menghapus akun "${fullName}" dari sistem?`)) return;
+            showConfirmModal(`Apakah Anda yakin ingin menghapus akun "${fullName}" dari sistem?`, "Konfirmasi Hapus", async () => {
+                await _supabase.from('signup_requests').delete().eq('user_id', userId);
+                await _supabase.from('profiles').delete().eq('id', userId);
 
-            await _supabase.from('signup_requests').delete().eq('user_id', userId);
-            await _supabase.from('profiles').delete().eq('id', userId);
-
-            showCustomAlert('Akun berhasil dihapus dari sistem.', 'Berhasil', 'success', () => loadSignupRequests());
+                showCustomAlert('Akun berhasil dihapus dari sistem.', 'Berhasil', 'success', () => loadSignupRequests());
+            });
         }
 
         // --- INISIALISASI & LOGIKA PAGING PADA TAB RAPAT ---
