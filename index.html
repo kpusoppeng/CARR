@@ -755,15 +755,27 @@
             const tbody = document.getElementById('signup-requests-body');
             tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Memuat data pengguna...</td></tr>`;
 
-            // 1. Ambil data profil & subbagian
-            let { data: profiles, error } = await _supabase
+            // 1. Ambil data dari tabel profiles
+            let { data: profiles, error: profError } = await _supabase
                 .from('profiles')
-                .select('*, sub_units(id, name)');
+                .select('*');
 
-            // 2. Ambil data signup_requests untuk mendapatkan email asli (text)
+            // 2. Ambil data dari signup_requests untuk mendapatkan email asli (text)
             let { data: requests } = await _supabase
                 .from('signup_requests')
                 .select('user_id, email, status');
+
+            // 3. Ambil data sub_units untuk mendapatkan nama subbagian
+            let { data: subUnits } = await _supabase
+                .from('sub_units')
+                .select('id, name');
+
+            let subUnitMap = {};
+            if (subUnits) {
+                subUnits.forEach(su => {
+                    subUnitMap[su.id] = su.name;
+                });
+            }
 
             let emailMap = {};
             if (requests) {
@@ -772,7 +784,7 @@
                 });
             }
 
-            if (error || !profiles || profiles.length === 0) {
+            if (profError || !profiles || profiles.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Tidak ada data pengguna ditemukan.</td></tr>`;
                 return;
             }
@@ -786,14 +798,13 @@
             }
 
             tbody.innerHTML = filteredProfiles.map(p => {
-                let userEmail = emailMap[p.id] || p.id; // Gunakan email asli dari signup_requests jika ada
+                let userEmail = emailMap[p.id] || p.id;
+                let subunitName = subUnitMap[p.sub_unit_id] ? subUnitMap[p.sub_unit_id] : '<span class="text-slate-500 italic">Belum ditentukan</span>';
+                let roleBadge = `<span class="text-blue-400 font-medium">${p.role.toUpperCase()}</span>`;
 
                 let statusBadge = p.is_active 
                     ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-[10px] font-semibold">Aktif</span>`
                     : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-lg text-[10px] font-semibold">Pending</span>`;
-                
-                let subunitName = p.sub_units ? p.sub_units.name : '<span class="text-slate-500 italic">Belum ditentukan</span>';
-                let roleBadge = `<span class="text-blue-400 font-medium">${p.role.toUpperCase()}</span>`;
 
                 let actionBtns = '';
                 if (!p.is_active) {
