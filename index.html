@@ -871,9 +871,21 @@
                 return;
             }
 
-            // Update atau Insert ke profiles
+            // Ambil email dari tabel signup_requests berdasarkan userId agar tidak null
+            let { data: reqData } = await _supabase
+                .from('signup_requests')
+                .select('email, full_name')
+                .eq('user_id', userId)
+                .single();
+
+            const userEmail = reqData ? reqData.email : '';
+            const fullName = reqData ? reqData.full_name : 'Pengguna';
+
+            // Kirim data ke tabel profiles dengan menyertakan email & full_name
             const { error: profError } = await _supabase.from('profiles').upsert({
                 id: userId,
+                email: userEmail,
+                full_name: fullName,
                 is_active: true,
                 role: role,
                 sub_unit_id: sub_unit_id
