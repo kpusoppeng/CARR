@@ -415,13 +415,13 @@
         </div>
     </div>
 
-    <!-- CUSTOM PREMIUM MODAL: EDIT RENCANA KERJA -->
+    <!-- CUSTOM PREMIUM MODAL: EDIT RENCANA KERJA (NAMA STAF READ-ONLY, HANYA EDIT STATUS & URAIAN) -->
     <div id="modal-edit-work" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-5 shadow-2xl shadow-black/80 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-4">
                 <div>
                     <h3 class="font-bold text-slate-100 text-base">Edit Rencana Kerja Rapat</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Perbarui informasi, status, atau uraian rencana kerja</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Perbarui status atau uraian rencana kerja</p>
                 </div>
                 <button onclick="closeEditWorkModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">&times;</button>
             </div>
@@ -429,9 +429,8 @@
                 <input type="hidden" id="edit-work-id">
                 <div>
                     <label class="block text-slate-300 font-medium mb-1.5">Personel / Nama Staf</label>
-                    <select id="edit-work-personnel" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
-                        <option value="">-- Pilih Nama Staf --</option>
-                    </select>
+                    <div id="edit-work-personnel-display" class="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 text-slate-300 font-semibold shadow-inner"></div>
+                    <input type="hidden" id="edit-work-personnel-val">
                 </div>
                 <div>
                     <label class="block text-slate-300 font-medium mb-1.5">Status Pekerjaan</label>
@@ -1335,16 +1334,14 @@
         }
 
         function openEditWorkModal(workId, currentPersonnel, currentStatus, currentTitle) {
+            let decodedPersonnel = decodeURIComponent(currentPersonnel);
             document.getElementById('edit-work-id').value = workId;
             document.getElementById('edit-work-status').value = decodeURIComponent(currentStatus);
             document.getElementById('edit-work-title').value = decodeURIComponent(currentTitle);
 
-            const selPersonnel = document.getElementById('edit-work-personnel');
-            selPersonnel.innerHTML = '<option value="">-- Pilih Nama Staf --</option>';
-            officialPersonnelList.forEach(name => {
-                let selected = (name === decodeURIComponent(currentPersonnel)) ? 'selected' : '';
-                selPersonnel.innerHTML += `<option value="${name}" ${selected}>${name}</option>`;
-            });
+            // Menampilkan nama personel sebagai teks statis (read-only)
+            document.getElementById('edit-work-personnel-display').innerText = decodedPersonnel || 'Staf';
+            document.getElementById('edit-work-personnel-val').value = decodedPersonnel;
 
             document.getElementById('modal-edit-work').classList.remove('hidden');
         }
@@ -1357,7 +1354,7 @@
         async function submitEditWorkPlan(event) {
             event.preventDefault();
             const workId = document.getElementById('edit-work-id').value;
-            const personnel = document.getElementById('edit-work-personnel').value;
+            const personnel = document.getElementById('edit-work-personnel-val').value;
             const status = document.getElementById('edit-work-status').value;
             const title = document.getElementById('edit-work-title').value;
 
