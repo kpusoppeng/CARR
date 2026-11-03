@@ -638,8 +638,14 @@
             document.getElementById('user-nav').classList.remove('hidden');
             document.getElementById('app-nav').classList.remove('hidden');
             document.getElementById('user-name-display').innerText = profile.full_name;
-            document.getElementById('badge-role-nav').innerText = profile.role.toUpperCase();
-            document.getElementById('badge-role').innerText = profile.role.toUpperCase();
+            
+            // Format label role agar bersih (Super Admin, Admin Subbagian, atau OP)
+            let formattedRole = profile.role.toUpperCase();
+            if (profile.role === 'admin_subunit') formattedRole = 'ADMIN SUBBAGIAN';
+            if (profile.role === 'operator') formattedRole = 'OP';
+
+            document.getElementById('badge-role-nav').innerText = formattedRole;
+            document.getElementById('badge-role').innerText = formattedRole;
             document.getElementById('txt-subunit').innerText = profile.sub_units ? profile.sub_units.name : 'Sekretariat KPU Kabupaten Soppeng';
 
             if (profile.role === 'super_admin') {
@@ -782,6 +788,17 @@
                     loadManageAgendas();
                     loadMeetingsCount();
                 });
+            });
+        }
+
+        async function deleteWorkPlan(workId) {
+            showConfirmModal("Apakah Anda yakin ingin menghapus rencana kerja ini?", "Konfirmasi Hapus", async () => {
+                const { error } = await _supabase.from('work_plans').delete().eq('id', workId);
+                if (error) {
+                    showCustomAlert('Gagal menghapus rencana kerja: ' + error.message, 'Kesalahan', 'error');
+                    return;
+                }
+                showCustomAlert('Rencana kerja berhasil dihapus.', 'Berhasil', 'success', () => loadMeetings());
             });
         }
 
@@ -1097,10 +1114,17 @@
 
         async function renderPagedMeetings() {
             const container = document.getElementById('meetings-list-container');
-            const totalItems = allMeetingsCache.length;
+            
+            // Filter meeting berdasarkan subbagian jika bukan super_admin
+            let filteredMeetings = allMeetingsCache;
+            if (currentUserProfile && currentUserProfile.role !== 'super_admin') {
+                filteredMeetings = allMeetingsCache.filter(m => m.sub_unit_id === currentUserProfile.sub_unit_id);
+            }
+
+            const totalItems = filteredMeetings.length;
 
             if (totalItems === 0) {
-                container.innerHTML = `<div class="p-8 bg-slate-950/60 rounded-2xl border border-slate-800 text-center text-slate-400 text-xs">Tidak ada agenda rapat untuk periode yang dipilih.</div>`;
+                container.innerHTML = `<div class="p-8 bg-slate-950/60 rounded-2xl border border-slate-800 text-center text-slate-400 text-xs">Tidak ada agenda rapat untuk subbagian Anda.</div>`;
                 document.getElementById('pagination-info').innerText = "Menampilkan 0 dari 0 agenda";
                 document.getElementById('pagination-buttons').innerHTML = "";
                 return;
@@ -1112,7 +1136,7 @@
 
             const startIndex = (currentPage - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
-            const currentMeetings = allMeetingsCache.slice(startIndex, endIndex);
+            const currentMeetings = filteredMeetings.slice(startIndex, endIndex);
 
             container.innerHTML = '';
             for (let m of currentMeetings) {
@@ -1129,13 +1153,23 @@
                         if (w.status === 'Selesai') statusBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
                         if (w.status === 'Batal') statusBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
 
+                        // Cek apakah user berhak mengedit/menghapus baris ini 
+                        // (Admin Subbagian bisa edit semua di subbagiannya, OP hanya miliknya sendiri)
+                        let canModifyWork = (currentUserProfile.role === 'super_admin' || currentUserProfile.role === 'admin_subunit' || w.user_id === currentUserProfile.id);
+
+                        let actionButtons = `<button onclick="openStatusModal('${w.id}')" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium underline underline-offset-2">Edit Status</button>`;
+                        
+                        if (canModifyWork) {
+                            actionButtons += ` <span class="text-slate-600">|</span> <button onclick="deleteWorkPlan('${w.id}')" class="text-xs text-rose-400 hover:text-rose-300 font-medium underline underline-offset-2">Hapus</button>`;
+                        }
+
                         return `
                             <tr class="hover:bg-slate-900/40 transition">
                                 <td class="p-3 font-medium text-slate-200">${w.admin_notes || 'Staf'}</td>
                                 <td class="p-3 text-blue-400">${w.title}</td>
                                 <td class="p-3"><span class="border px-2.5 py-1 rounded-lg text-[10px] font-semibold ${statusBadge}">${w.status || 'Rencana Kerja'}</span></td>
-                                <td class="p-3 text-center">
-                                    <button onclick="openStatusModal('${w.id}')" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium underline underline-offset-2">Edit Status</button>
+                                <td class="p-3 text-center space-x-2">
+                                    ${actionButtons}
                                 </td>
                             </tr>
                         `;
@@ -1172,6 +1206,27 @@
                     </div>
                 `;
             }
+
+            document.getElementById('pagination-info').innerText = `Menampilkan agenda ${startIndex + 1} - ${Math.min(endIndex, totalItems)} dari total ${totalItems} agenda`;
+            
+            let btnHtml = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="px-3 py-1.5 rounded-xl bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed"' : 'class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"'}>Sebelumnya</button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    btnHtml += `<button class="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-semibold shadow-md shadow-blue-600/20">${i}</button>`;
+                } else {
+                    btnHtml += `<button onclick="changePage(${i})" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition">${i}</button>`;
+                }
+            }
+
+            btnHtml += `
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled class="px-3 py-1.5 rounded-xl bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed"' : 'class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"'}>Selanjutnya</button>
+            `;
+
+            document.getElementById('pagination-buttons').innerHTML = btnHtml;
+        }
 
             document.getElementById('pagination-info').innerText = `Menampilkan agenda ${startIndex + 1} - ${Math.min(endIndex, totalItems)} dari total ${totalItems} agenda`;
             
