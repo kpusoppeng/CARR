@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CARR - Catatan Rapat Rutin | KPU Kabupaten Soppeng</title>
-    <!-- Tailwind CSS CDN untuk Desain Modern -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS Client CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -21,117 +21,494 @@
         }
     </script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between font-sans selection:bg-blue-600 selection:text-white">
 
-    <!-- Header / Navbar Sederhana -->
-    <header class="bg-kpuDark border-b border-slate-800 p-4 shadow-md">
+    <!-- Header / Navbar Utama -->
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800/80 p-4 shadow-xl sticky top-0 z-50">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-blue-600 text-white font-bold p-2 rounded-lg text-lg">CARR</div>
+                <div class="bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold p-2.5 rounded-xl shadow-lg shadow-blue-900/30 text-lg">CARR</div>
                 <div>
-                    <h1 class="font-bold text-sm sm:text-base tracking-wide">CATATAN RAPAT RUTIN</h1>
+                    <h1 class="font-bold text-sm sm:text-base tracking-wide text-slate-100">CATATAN RAPAT RUTIN</h1>
                     <p class="text-xs text-slate-400">Sekretariat KPU Kabupaten Soppeng</p>
                 </div>
             </div>
-            <div id="user-nav" class="hidden flex items-center space-x-3">
-                <span id="user-email" class="text-xs text-slate-300 hidden sm:inline"></span>
-                <button onclick="handleLogout()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-3 py-1.5 rounded-lg transition">Keluar</button>
+            <div id="user-nav" class="hidden flex items-center space-x-4">
+                <div class="text-right hidden sm:block">
+                    <p id="user-name-display" class="text-xs font-semibold text-slate-200"></p>
+                    <span id="badge-role-nav" class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full font-medium">Role</span>
+                </div>
+                <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 text-xs px-3.5 py-2 rounded-xl transition duration-200 shadow-sm font-medium">Keluar</button>
             </div>
         </div>
     </header>
 
-    <!-- Konten Utama (Dinamis Berdasarkan Status Login) -->
-    <main class="flex-grow flex items-center justify-center p-4">
+    <!-- Menu Navigasi Aplikasi -->
+    <nav id="app-nav" class="hidden bg-slate-900/50 backdrop-blur-md border-b border-slate-800 px-4 py-2.5">
+        <div class="max-w-7xl mx-auto flex space-x-2 overflow-x-auto text-xs">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-4 py-2 rounded-xl font-medium bg-blue-600 text-white shadow-lg shadow-blue-600/20 transition">Dashboard</button>
+            <button onclick="switchTab('rapat')" id="nav-rapat" class="nav-btn px-4 py-2 rounded-xl font-medium text-slate-300 hover:bg-slate-800/80 hover:text-white transition">Rapat Rutin</button>
+            <button onclick="switchTab('monitoring')" id="nav-monitoring" class="nav-btn px-4 py-2 rounded-xl font-medium text-slate-300 hover:bg-slate-800/80 hover:text-white transition">Monitoring</button>
+            <button onclick="switchTab('arsip')" id="nav-arsip" class="nav-btn px-4 py-2 rounded-xl font-medium text-slate-300 hover:bg-slate-800/80 hover:text-white transition">Arsip</button>
+            <button onclick="switchTab('admin-users')" id="nav-admin-users" class="nav-btn hidden px-4 py-2 rounded-xl font-medium text-amber-400 hover:bg-slate-800/80 transition">Manajemen App</button>
+        </div>
+    </nav>
+
+    <!-- Konten Utama -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6">
         
-        <!-- 1. Halaman Login / Masuk -->
-        <div id="view-login" class="max-w-md w-full bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-2xl text-center space-y-6">
-            <div class="space-y-2">
-                <div class="inline-block bg-blue-600/20 text-blue-400 p-3 rounded-full text-2xl mb-2">📊</div>
-                <h2 class="text-2xl font-bold tracking-tight">Selamat Datang di CARR</h2>
-                <p class="text-xs text-slate-400">Sistem Pengelolaan Rencana, Realisasi, dan Evaluasi Rapat Rutin Sekretariat KPU Kabupaten Soppeng</p>
+        <!-- 1. Halaman Login -->
+        <div id="view-login" class="flex items-center justify-center min-h-[75vh]">
+            <div class="max-w-md w-full bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-8 shadow-2xl text-center space-y-6 relative overflow-hidden">
+                <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="space-y-3 relative z-10">
+                    <div class="inline-block bg-blue-600/20 text-blue-400 p-4 rounded-2xl text-3xl mb-2 shadow-inner border border-blue-500/20">📊</div>
+                    <h2 class="text-2xl font-bold tracking-tight text-slate-100">Selamat Datang di CARR</h2>
+                    <p class="text-xs text-slate-400 leading-relaxed">Sistem Pengelolaan Rencana, Realisasi, dan Evaluasi Rapat Rutin Sekretariat KPU Kabupaten Soppeng</p>
+                </div>
+                <button onclick="handleGoogleLogin()" class="w-full relative z-10 flex items-center justify-center space-x-3 bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3.5 px-4 rounded-2xl transition duration-200 shadow-xl shadow-white/5 active:scale-[0.98]">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                    <span>Masuk dengan Google</span>
+                </button>
             </div>
-            <button onclick="handleGoogleLogin()" class="w-full flex items-center justify-center space-x-3 bg-white hover:bg-slate-100 text-slate-900 font-medium py-3 px-4 rounded-xl transition shadow-lg">
-                <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                <span>Masuk dengan Google</span>
-            </button>
         </div>
 
         <!-- 2. Halaman Menunggu Persetujuan Admin -->
-        <div id="view-pending" class="hidden max-w-md w-full bg-slate-800 border border-amber-500/30 rounded-2xl p-8 shadow-2xl text-center space-y-4">
-            <div class="text-4xl">⏳</div>
-            <h2 class="text-xl font-bold text-amber-400">Menunggu Persetujuan Admin</h2>
-            <p class="text-sm text-slate-300">Akun Anda telah terdaftar melalui Google, namun belum disetujui oleh Admin Utama Sekretariat KPU Kabupaten Soppeng.</p>
-            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700 text-xs text-slate-400">
-                Silakan hubungi Admin Utama Subbagian untuk mengaktifkan akun dan menetapkan Subbagian Anda.
+        <div id="view-pending" class="hidden flex items-center justify-center min-h-[75vh]">
+            <div class="max-w-md w-full bg-slate-900/80 backdrop-blur-xl border border-amber-500/20 rounded-3xl p-8 shadow-2xl text-center space-y-5">
+                <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center mx-auto text-2xl">⏳</div>
+                <h2 class="text-xl font-bold text-amber-400">Menunggu Persetujuan Admin</h2>
+                <p class="text-sm text-slate-300 leading-relaxed">Akun Anda telah terdaftar melalui Google, namun belum disetujui oleh Admin Utama Sekretariat KPU Kabupaten Soppeng.</p>
+                <button onclick="handleLogout()" class="text-xs text-rose-400 hover:text-rose-300 font-medium transition underline underline-offset-4 pt-2">Keluar / Ganti Akun</button>
             </div>
-            <button onclick="handleLogout()" class="text-xs text-rose-400 hover:underline pt-2">Keluar / Ganti Akun</button>
         </div>
 
-        <!-- 3. Halaman Dashboard Utama (Sementara) -->
-        <div id="view-dashboard" class="hidden max-w-4xl w-full bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-2xl space-y-6">
-            <div class="border-b border-slate-700 pb-4 flex justify-between items-center">
+        <!-- 3. TAB 1: DASHBOARD -->
+        <div id="tab-dashboard" class="space-y-6">
+            <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+                <div class="border-b border-slate-800 pb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-100 tracking-tight">Dashboard Utama CARR</h2>
+                        <p class="text-xs text-slate-400 mt-1">Sekretariat KPU Kabupaten Soppeng</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button id="btn-add-agenda" onclick="openAddAgendaModal()" class="hidden bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-emerald-900/30 font-medium active:scale-95 flex items-center space-x-2">
+                            <span>+ Tambah Agenda Rapat</span>
+                        </button>
+                        <span id="badge-role" class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs px-3.5 py-1.5 rounded-full font-semibold">Role</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div class="bg-slate-950/60 border border-slate-800/80 p-5 rounded-2xl shadow-inner">
+                        <p class="text-xs text-slate-400 font-medium">Status Akun</p>
+                        <p class="text-lg font-bold text-emerald-400 mt-1 flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Aktif & Terverifikasi</span>
+                        </p>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800/80 p-5 rounded-2xl shadow-inner">
+                        <p class="text-xs text-slate-400 font-medium">Subbagian</p>
+                        <p id="txt-subunit" class="text-sm font-semibold text-slate-200 mt-1">Memuat...</p>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800/80 p-5 rounded-2xl shadow-inner">
+                        <p class="text-xs text-slate-400 font-medium">Total Agenda Rapat</p>
+                        <p id="txt-total-agenda" class="text-lg font-bold text-blue-400 mt-1">0 Agenda</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. TAB 2: RAPAT RUTIN (Dengan Filter Periode & Paging) -->
+        <div id="tab-rapat" class="hidden space-y-6">
+            <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-100 tracking-tight">Daftar Rapat Rutin & Rencana Kerja</h2>
+                        <p class="text-xs text-slate-400 mt-1">Pilih periode rapat untuk melihat dan mengelola rencana kerja.</p>
+                    </div>
+                    <div class="flex items-center space-x-2 w-full sm:w-auto">
+                        <span class="text-xs text-slate-400 shrink-0">Filter Periode:</span>
+                        <select id="filter-period" onchange="onPeriodFilterChange()" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                            <option value="all">Semua Periode</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Container Daftar Rapat -->
+                <div id="meetings-list-container" class="space-y-4">
+                    <p class="text-xs text-slate-500 text-center py-8">Memuat jadwal rapat...</p>
+                </div>
+                <!-- Navigasi Paging -->
+                <div id="pagination-container" class="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-slate-800/80 gap-3 text-xs">
+                    <span id="pagination-info" class="text-slate-400">Menampilkan 0 dari 0 agenda</span>
+                    <div id="pagination-buttons" class="flex items-center space-x-1.5">
+                        <!-- Tombol halaman digenerate via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. TAB 3: MONITORING -->
+        <div id="tab-monitoring" class="hidden space-y-6">
+            <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
+                <h2 class="text-lg font-bold text-slate-100">Monitoring Mingguan</h2>
+                <div class="p-8 bg-slate-950/60 rounded-2xl border border-slate-800/80 text-center text-slate-400 text-xs">
+                    Rekapitulasi dan grafik akan segera ditampilkan.
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. TAB 4: ARSIP -->
+        <div id="tab-arsip" class="hidden space-y-6">
+            <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
+                <h2 class="text-lg font-bold text-slate-100">Arsip & Riwayat Rapat</h2>
+                <div class="p-8 bg-slate-950/60 rounded-2xl border border-slate-800/80 text-center text-slate-400 text-xs">
+                    Belum ada arsip rapat tersimpan.
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. TAB 5: MANAJEMEN APP -->
+        <div id="tab-admin-users" class="hidden space-y-6">
+            <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
                 <div>
-                    <h2 class="text-xl font-bold text-blue-400">Dashboard Utama CARR</h2>
-                    <p class="text-xs text-slate-400">Sekretariat KPU Kabupaten Soppeng</p>
+                    <h2 class="text-lg font-bold text-amber-400">Manajemen & Persetujuan Akun Pengguna</h2>
+                    <p class="text-xs text-slate-400 mt-1">Setujui atau kelola hak akses akun yang mendaftar ke sistem.</p>
                 </div>
-                <span id="badge-role" class="bg-blue-600/20 text-blue-400 text-xs px-3 py-1 rounded-full font-medium border border-blue-500/30">Role</span>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
-                    <p class="text-xs text-slate-400">Status Akun</p>
-                    <p class="text-lg font-bold text-emerald-400">Aktif & Terverifikasi</p>
+                <div class="border border-slate-800 rounded-2xl overflow-hidden shadow-inner bg-slate-950/40">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+                            <tr>
+                                <th class="p-3.5">Nama Pengguna</th>
+                                <th class="p-3.5">Email</th>
+                                <th class="p-3.5">Status</th>
+                                <th class="p-3.5 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="signup-requests-body" class="divide-y divide-slate-800/60">
+                            <tr>
+                                <td colspan="4" class="p-6 text-center text-slate-500">Memuat permohonan...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
-                    <p class="text-xs text-slate-400">Subbagian</p>
-                    <p id="txt-subunit" class="text-sm font-semibold text-slate-200">Memuat...</p>
+
+                <div class="border-t border-slate-800 pt-6 space-y-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-blue-400">Manajemen Daftar Agenda Rapat</h2>
+                        <p class="text-xs text-slate-400 mt-1">Edit informasi atau hapus agenda rapat rutin yang ada.</p>
+                    </div>
+                    <div class="border border-slate-800 rounded-2xl overflow-hidden shadow-inner bg-slate-950/40">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+                                <tr>
+                                    <th class="p-3.5">Nomor / Identitas</th>
+                                    <th class="p-3.5">Judul Rapat</th>
+                                    <th class="p-3.5">Tanggal</th>
+                                    <th class="p-3.5 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manage-agendas-body" class="divide-y divide-slate-800/60">
+                                <tr>
+                                    <td colspan="4" class="p-6 text-center text-slate-500">Memuat daftar agenda...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
-                    <p class="text-xs text-slate-400">Total Pekerjaan Unit</p>
-                    <p class="text-lg font-bold text-blue-400">0 Rencana</p>
-                </div>
-            </div>
-            <div class="bg-blue-950/30 border border-blue-800/40 p-4 rounded-xl text-xs text-blue-200">
-                🎉 Tahap login dan autentikasi dasar berhasil! Pada tahap berikutnya kita akan menambahkan menu lengkap pekerjaan staf dan manajemen rapat rutin.
             </div>
         </div>
 
     </main>
 
+    <!-- CUSTOM PREMIUM MODAL: TAMBAH AGENDA RAPAT -->
+    <div id="modal-add-agenda" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl shadow-black/80">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <div>
+                    <h3 class="font-bold text-slate-100 text-base">Tambah Jadwal Rapat Rutin</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Buat agenda rapat baru untuk sekretariat</p>
+                </div>
+                <button onclick="closeAddAgendaModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">&times;</button>
+            </div>
+            <form id="form-add-agenda" onsubmit="submitAgenda(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Nomor / Identitas Rapat</label>
+                    <input type="text" id="agenda-number" required placeholder="Misal: Rapat Rutin Minggu ke-1" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Judul / Tema Rapat</label>
+                    <input type="text" id="agenda-title" required placeholder="Judul rapat..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Tanggal Rapat</label>
+                    <input type="date" id="agenda-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Agenda / Pembahasan</label>
+                    <textarea id="agenda-desc" rows="3" placeholder="Uraian agenda rapat..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeAddAgendaModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-xl transition font-medium">Batal</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl transition font-medium shadow-lg shadow-blue-600/30">Simpan Agenda</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CUSTOM PREMIUM MODAL: EDIT AGENDA RAPAT -->
+    <div id="modal-edit-agenda" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl shadow-black/80">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <div>
+                    <h3 class="font-bold text-slate-100 text-base">Edit Jadwal Rapat Rutin</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Perbarui informasi agenda rapat</p>
+                </div>
+                <button onclick="closeEditAgendaModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">&times;</button>
+            </div>
+            <form id="form-edit-agenda" onsubmit="submitEditAgenda(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="edit-agenda-id">
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Nomor / Identitas Rapat</label>
+                    <input type="text" id="edit-agenda-number" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Judul / Tema Rapat</label>
+                    <input type="text" id="edit-agenda-title" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Tanggal Rapat</label>
+                    <input type="date" id="edit-agenda-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Agenda / Pembahasan</label>
+                    <textarea id="edit-agenda-desc" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeEditAgendaModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-xl transition font-medium">Batal</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl transition font-medium shadow-lg shadow-blue-600/30">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CUSTOM PREMIUM MODAL: TAMBAH RENCANA KERJA -->
+    <div id="modal-add-work" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-5 shadow-2xl shadow-black/80 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <div>
+                    <h3 class="font-bold text-slate-100 text-base">Tambah Rencana Kerja Rapat</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Pilih personel, subbagian, dan katalog pekerjaan</p>
+                </div>
+                <button onclick="closeAddWorkModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">&times;</button>
+            </div>
+            <form id="form-add-work" onsubmit="submitWorkPlan(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="work-meeting-id">
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Pilih Personel / Nama Staf</label>
+                    <select id="work-personnel" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                        <option value="">-- Pilih Nama Staf --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Pilih Subbagian</label>
+                    <select id="work-subunit" onchange="onSubUnitChange()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                        <option value="">-- Pilih Subbagian --</option>
+                        <option value="Rendatin">Rendatin</option>
+                        <option value="KUL">KUL</option>
+                        <option value="Parmas & SDM">Parmas & SDM</option>
+                        <option value="Teknis & Hukum">Teknis & Hukum</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Kategori / Katalog Pekerjaan</label>
+                    <select id="work-category" onchange="onCategoryChange()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                        <option value="">-- Pilih Subbagian Terlebih Dahulu --</option>
+                    </select>
+                </div>
+                <div id="new-category-container" class="hidden">
+                    <label class="block text-amber-400 font-medium mb-1.5">Ketik Nama Kategori / Pekerjaan Baru</label>
+                    <input type="text" id="new-category-input" placeholder="Masukkan nama kategori baru..." class="w-full bg-slate-950 border border-amber-500/40 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-amber-500 transition shadow-inner">
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Uraian Rencana Kerja / Catatan</label>
+                    <textarea id="work-title" required rows="3" placeholder="Masukkan uraian rencana kerja..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeAddWorkModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-xl transition font-medium">Batal</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl transition font-medium shadow-lg shadow-blue-600/30">Simpan Rencana Kerja</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CUSTOM PREMIUM MODAL: UPDATE STATUS REALISASI -->
+    <div id="modal-update-status" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl shadow-black/80">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <div>
+                    <h3 class="font-bold text-slate-100 text-base">Pembaruan Status Realisasi</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Pilih status progres pekerjaan saat ini</p>
+                </div>
+                <button onclick="closeStatusModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">&times;</button>
+            </div>
+            <input type="hidden" id="active-work-id">
+            <div class="space-y-2.5 text-xs">
+                <button onclick="saveNewStatus('Rencana Kerja')" class="w-full text-left p-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-200 font-medium transition flex items-center justify-between">
+                    <span>📌 Rencana Kerja</span>
+                    <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Default</span>
+                </button>
+                <button onclick="saveNewStatus('Dalam Proses')" class="w-full text-left p-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 text-amber-400 font-medium transition flex items-center justify-between">
+                    <span>⏳ Dalam Proses</span>
+                    <span class="text-[10px] text-amber-400/80 bg-amber-500/10 px-2 py-0.5 rounded">Progres</span>
+                </button>
+                <button onclick="saveNewStatus('Selesai')" class="w-full text-left p-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 text-emerald-400 font-medium transition flex items-center justify-between">
+                    <span>✅ Selesai</span>
+                    <span class="text-[10px] text-emerald-400/80 bg-emerald-500/10 px-2 py-0.5 rounded">Tuntas</span>
+                </button>
+                <button onclick="saveNewStatus('Batal')" class="w-full text-left p-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-rose-500/40 text-rose-400 font-medium transition flex items-center justify-between">
+                    <span>❌ Batal</span>
+                    <span class="text-[10px] text-rose-400/80 bg-rose-500/10 px-2 py-0.5 rounded">Dibatalkan</span>
+                </button>
+            </div>
+            <div class="pt-2">
+                <button onclick="closeStatusModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-medium transition">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM PREMIUM ALERT MODAL -->
+    <div id="modal-custom-alert" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[999]">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl shadow-black/80">
+            <div id="custom-alert-icon" class="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto text-2xl font-bold">i</div>
+            <div class="space-y-1">
+                <h4 id="custom-alert-title" class="font-bold text-slate-100 text-base">Informasi</h4>
+                <p id="custom-alert-message" class="text-xs text-slate-300 leading-relaxed"></p>
+            </div>
+            <div class="pt-2">
+                <button id="custom-alert-btn-ok" onclick="closeCustomAlert()" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2.5 px-4 rounded-xl transition shadow-lg shadow-blue-600/30">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
-    <footer class="bg-kpuDark border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+    <footer class="bg-slate-900/50 backdrop-blur-md border-t border-slate-800/80 py-4 text-center text-xs text-slate-500">
         &copy; 2026 CARR v1.0 &bull; Sekretariat KPU Kabupaten Soppeng
     </footer>
 
-    <!-- Skrip Supabase & Logika Aplikasi -->
+    <!-- Skrip Logika Aplikasi -->
     <script>
         // --- KONFIGURASI SUPABASE ---
-        // Ganti nilai di bawah ini dengan Project URL dan Publishable Key Anda
         const SUPABASE_URL = 'https://xedavxlvoxjkhknbbfwm.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_JuFsph32ZE_zR9kE46451g_LB0eKtJV';
 
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Fungsi Login Google
-        async function handleGoogleLogin() {
-            const { error } = await _supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: window.location.href
-                }
-            });
-            if (error) {
-                alert('Gagal login: ' + error.message);
+        let currentUserProfile = null;
+        let allMeetingsCache = []; // Cache data rapat untuk keperluan paging
+        let currentPage = 1;
+        const itemsPerPage = 2; // Menampilkan 2 agenda rapat per halaman (bisa disesuaikan)
+
+        function showCustomAlert(message, title = "Informasi", type = "info", callback = null) {
+            const modal = document.getElementById('modal-custom-alert');
+            document.getElementById('custom-alert-title').innerText = title;
+            document.getElementById('custom-alert-message').innerText = message;
+            const iconEl = document.getElementById('custom-alert-icon');
+
+            if (type === 'success') {
+                iconEl.className = "w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-2xl font-bold";
+                iconEl.innerText = "✓";
+            } else if (type === 'error') {
+                iconEl.className = "w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto text-2xl font-bold";
+                iconEl.innerText = "✕";
+            } else {
+                iconEl.className = "w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto text-2xl font-bold";
+                iconEl.innerText = "i";
+            }
+
+            window.customAlertCallback = callback;
+            modal.classList.remove('hidden');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('modal-custom-alert').classList.add('hidden');
+            if (window.customAlertCallback) {
+                window.customAlertCallback();
+                window.customAlertCallback = null;
             }
         }
 
-        // Fungsi Logout
+        // Daftar Nama Personel Resmi
+        const officialPersonnelList = [
+            "Sitti Rahmawati, S.Pi", "M. Reza Hidayat Iswang, S.Sos, MM", "Rias Rusdy, SH", "A. Muh. Ikram, SE, MM",
+            "Andi Anisar, SH. M.Si", "Maulana Taufan AR., S.AB", "Darmawati, S.Sos", "Asriani, S.IP",
+            "Fanny Adriyani, S.IP", "ST. Khadijah Amin, S.Kom", "A. Nirviani, S.Kom", "Agung Marwansyah, SH",
+            "Regina Adizia Lastri, SH", "Hendra", "Yuliana", "Robi Kurniawan, A.MD",
+            "Justang, S.Kom", "Ekayanti, S.Pd", "Asdar S.Sos", "Martang, S.Ip",
+            "Marsadi, S. Ip", "Iwan, S.Ip", "Andi Fareley, S.Sos", "Munirah Madaniar, S.Ip",
+            "Suharni, S.Sos", "Darwis", "Wahyu Rahman", "A. Rachmat Gunadi"
+        ];
+
+        // Katalog Pekerjaan Berdasarkan 4 Subbagian
+        const subbagianCatalog = {
+            "Rendatin": [
+                "Pemutakhiran Data Pemilih (Mutarlih)", "Evaluasi SAKIP", "Renja/RKA-K/L", "Renstra",
+                "Indikator Kinerja Utama – IKU", "Rencana Kinerja Tahunan – RKT", "Perjanjian Kinerja – PK KPU",
+                "Matriks Rencana Aksi Kinerja (RAK)", "LAKIP", "Pohon Kinerja – Cascading", "Evaluasi SAKIP/e-SAKIP", "e-LAPKIN KPU RI"
+            ],
+            "KUL": [
+                "Arsip dan Katalogisasi Dokumen Fisik", "Revisi DJA", "Revisi POK", "Monev Bappenas", "SMART DJA Kemenkeu"
+            ],
+            "Parmas & SDM": [
+                "DIM Sistem Informasi KPU", "Standar Pelayanan", "Forum Konsultasi Publik (FKP)", "Standar Operasional Prosedur – SOP",
+                "Reformasi Birokrasi (Kemenpan RB)", "Survey Kepuasan Masyarakat (SKM)", "Tindaklanjut Hasil Evaluasi SKM", "PEKPPP Kemenpan RB"
+            ],
+            "Teknis & Hukum": [
+                "Laporan Penyelenggaraan Tahapan Pemilu", "Laporan Penyelenggaraan Tahapan Pilkada"
+            ]
+        };
+
+        function switchTab(tabId) {
+            ['dashboard', 'rapat', 'monitoring', 'arsip', 'admin-users'].forEach(id => {
+                const el = document.getElementById('tab-' + id);
+                if (el) el.classList.add('hidden');
+                const btn = document.getElementById('nav-' + id);
+                if (btn) {
+                    btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/20');
+                    btn.classList.add('text-slate-300', 'hover:bg-slate-800/80');
+                }
+            });
+
+            const activeTab = document.getElementById('tab-' + tabId);
+            if (activeTab) activeTab.classList.remove('hidden');
+
+            const activeBtn = document.getElementById('nav-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-300', 'hover:bg-slate-800/80');
+                activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/20');
+            }
+
+            if (tabId === 'admin-users') {
+                loadSignupRequests();
+                loadManageAgendas();
+            } else if (tabId === 'rapat') {
+                initRapatTab();
+            }
+        }
+
+        async function handleGoogleLogin() {
+            const { error } = await _supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: window.location.href }
+            });
+            if (error) showCustomAlert('Gagal login: ' + error.message, 'Kesalahan', 'error');
+        }
+
         async function handleLogout() {
             await _supabase.auth.signOut();
             window.location.href = window.location.pathname;
         }
 
-        // Periksa Sesi Pengguna saat Halaman Dimuat
         async function checkUserSession() {
             const { data: { session } } = await _supabase.auth.getSession();
             if (!session) {
@@ -139,56 +516,489 @@
                 return;
             }
 
-            // Pengguna sudah login, tampilkan info di navbar
-            document.getElementById('user-nav').classList.remove('hidden');
-            document.getElementById('user-email').innerText = session.user.email;
-
-            // Cek apakah profil sudah terdaftar di database profiles
-            let { data: profile, error } = await _supabase
+            let { data: profile } = await _supabase
                 .from('profiles')
                 .select('*, sub_units(name)')
                 .eq('id', session.user.id)
                 .single();
 
-            if (!profile) {
-                // Jika belum ada profil, otomatis buatkan permohonan akun baru (signup_request)
-                await _supabase.from('signup_requests').upsert({
-                    user_id: session.user.id,
-                    email: session.user.email,
-                    full_name: session.user.user_metadata.full_name || session.user.email,
-                    status: 'pending'
-                }, { onConflict: 'user_id' });
-
-                await _supabase.from('profiles').upsert({
-                    id: session.user.id,
-                    email: session.user.email,
-                    full_name: session.user.user_metadata.full_name || session.user.email,
-                    is_active: false
-                }, { onConflict: 'id' });
-
+            if (!profile || !profile.is_active) {
                 showView('view-pending');
                 return;
             }
 
-            if (!profile.is_active) {
-                showView('view-pending');
-                return;
-            }
-
-            // Jika aktif, tampilkan dashboard
+            currentUserProfile = profile;
             showView('view-dashboard');
+
+            document.getElementById('user-nav').classList.remove('hidden');
+            document.getElementById('app-nav').classList.remove('hidden');
+            document.getElementById('user-name-display').innerText = profile.full_name;
+            document.getElementById('badge-role-nav').innerText = profile.role.toUpperCase();
             document.getElementById('badge-role').innerText = profile.role.toUpperCase();
-            document.getElementById('txt-subunit').innerText = profile.sub_units ? profile.sub_units.name : 'Belum ditentukan';
+            document.getElementById('txt-subunit').innerText = profile.sub_units ? profile.sub_units.name : 'Sekretariat KPU Kabupaten Soppeng';
+
+            if (profile.role === 'super_admin') {
+                document.getElementById('btn-add-agenda').classList.remove('hidden');
+                document.getElementById('nav-admin-users').classList.remove('hidden');
+            }
+
+            loadMeetingsCount();
         }
 
         function showView(viewId) {
             ['view-login', 'view-pending', 'view-dashboard'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
             });
-            document.getElementById(viewId).classList.remove('hidden');
+            if (viewId === 'view-dashboard') {
+                document.getElementById('tab-dashboard').classList.remove('hidden');
+            } else {
+                const target = document.getElementById(viewId);
+                if (target) target.classList.remove('hidden');
+            }
         }
 
-        // Jalankan saat halaman siap
+        function openAddAgendaModal() {
+            document.getElementById('modal-add-agenda').classList.remove('hidden');
+        }
+        function closeAddAgendaModal() {
+            document.getElementById('modal-add-agenda').classList.add('hidden');
+            document.getElementById('form-add-agenda').reset();
+        }
+
+        async function submitAgenda(event) {
+            event.preventDefault();
+            const meeting_number = document.getElementById('agenda-number').value;
+            const title = document.getElementById('agenda-title').value;
+            const meeting_date = document.getElementById('agenda-date').value;
+            const agenda = document.getElementById('agenda-desc').value;
+
+            const { error } = await _supabase.from('meetings').insert({
+                sub_unit_id: currentUserProfile.sub_unit_id,
+                meeting_number: meeting_number,
+                title: title,
+                meeting_date: meeting_date,
+                agenda: agenda,
+                status: 'scheduled'
+            });
+
+            if (error) {
+                showCustomAlert('Gagal menyimpan agenda: ' + error.message, 'Kesalahan', 'error');
+                return;
+            }
+
+            showCustomAlert('Agenda rapat berhasil ditambahkan!', 'Berhasil', 'success', () => {
+                closeAddAgendaModal();
+                initRapatTab();
+                loadMeetingsCount();
+            });
+        }
+
+        // --- MANAJEMEN AGENDA DI MENU "MANAJEMEN APP" ---
+        async function loadManageAgendas() {
+            const tbody = document.getElementById('manage-agendas-body');
+            tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500">Memuat daftar agenda...</td></tr>`;
+
+            let { data: meetings, error } = await _supabase
+                .from('meetings')
+                .select('*')
+                .order('meeting_date', { ascending: false });
+
+            if (error || !meetings || meetings.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500">Belum ada agenda rapat tersedia.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = meetings.map(m => `
+                <tr class="hover:bg-slate-900/40 transition">
+                    <td class="p-3.5 font-medium text-slate-200">${m.meeting_number}</td>
+                    <td class="p-3.5 text-blue-400 font-semibold">${m.title}</td>
+                    <td class="p-3.5 text-slate-400">${m.meeting_date}</td>
+                    <td class="p-3.5 text-center space-x-3">
+                        <button onclick="openEditAgendaModal('${m.id}', '${m.meeting_number}', '${m.title}', '${m.meeting_date}', '${m.agenda || ''}')" class="text-xs text-amber-400 hover:text-amber-300 font-medium underline underline-offset-2">Edit</button>
+                        <button onclick="deleteAgenda('${m.id}')" class="text-xs text-rose-400 hover:text-rose-300 font-medium underline underline-offset-2">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openEditAgendaModal(id, number, title, date, agenda) {
+            document.getElementById('edit-agenda-id').value = id;
+            document.getElementById('edit-agenda-number').value = number;
+            document.getElementById('edit-agenda-title').value = title;
+            document.getElementById('edit-agenda-date').value = date;
+            document.getElementById('edit-agenda-desc').value = agenda;
+            document.getElementById('modal-edit-agenda').classList.remove('hidden');
+        }
+
+        function closeEditAgendaModal() {
+            document.getElementById('modal-edit-agenda').classList.add('hidden');
+            document.getElementById('form-edit-agenda').reset();
+        }
+
+        async function submitEditAgenda(event) {
+            event.preventDefault();
+            const id = document.getElementById('edit-agenda-id').value;
+            const meeting_number = document.getElementById('edit-agenda-number').value;
+            const title = document.getElementById('edit-agenda-title').value;
+            const meeting_date = document.getElementById('edit-agenda-date').value;
+            const agenda = document.getElementById('edit-agenda-desc').value;
+
+            const { error } = await _supabase.from('meetings').update({
+                meeting_number,
+                title,
+                meeting_date,
+                agenda
+            }).eq('id', id);
+
+            if (error) {
+                showCustomAlert('Gagal memperbarui agenda: ' + error.message, 'Kesalahan', 'error');
+                return;
+            }
+
+            showCustomAlert('Agenda rapat berhasil diperbarui!', 'Berhasil', 'success', () => {
+                closeEditAgendaModal();
+                loadManageAgendas();
+            });
+        }
+
+        async function deleteAgenda(id) {
+            if (!confirm("Apakah Anda yakin ingin menghapus agenda rapat ini beserta seluruh rencana kerja di dalamnya?")) return;
+
+            await _supabase.from('work_plans').delete().eq('meeting_id', id);
+
+            const { error } = await _supabase.from('meetings').delete().eq('id', id);
+            if (error) {
+                showCustomAlert('Gagal menghapus agenda: ' + error.message, 'Kesalahan', 'error');
+                return;
+            }
+
+            showCustomAlert('Agenda rapat berhasil dihapus!', 'Berhasil', 'success', () => {
+                loadManageAgendas();
+                loadMeetingsCount();
+            });
+        }
+
+        // --- INISIALISASI & LOGIKA PAGING PADA TAB RAPAT ---
+        async function initRapatTab() {
+            currentPage = 1;
+            await populatePeriodFilter();
+            await loadMeetings();
+        }
+
+        async function populatePeriodFilter() {
+            let { data: meetings } = await _supabase.from('meetings').select('meeting_date');
+            const select = document.getElementById('filter-period');
+            const currentVal = select.value;
+            
+            let monthsSet = new Set();
+            if (meetings) {
+                meetings.forEach(m => {
+                    if (m.meeting_date) {
+                        let ym = m.meeting_date.substring(0, 7);
+                        monthsSet.add(ym);
+                    }
+                });
+            }
+
+            let sortedMonths = Array.from(monthsSet).sort().reverse();
+            select.innerHTML = `<option value="all">Semua Periode</option>`;
+            sortedMonths.forEach(ym => {
+                let [y, m] = ym.split('-');
+                let dateObj = new Date(y, m - 1, 1);
+                let monthName = dateObj.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+                select.innerHTML += `<option value="${ym}">${monthName}</option>`;
+            });
+
+            if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
+                select.value = currentVal;
+            }
+        }
+
+        function onPeriodFilterChange() {
+            currentPage = 1; // Reset ke halaman 1 saat filter bulan diubah
+            loadMeetings();
+        }
+
+        async function loadMeetings() {
+            const container = document.getElementById('meetings-list-container');
+            container.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">Memuat data rapat...</p>`;
+
+            let periodFilter = document.getElementById('filter-period').value;
+
+            let { data: meetings, error } = await _supabase
+                .from('meetings')
+                .select('*')
+                .order('meeting_date', { ascending: false });
+
+            if (error || !meetings || meetings.length === 0) {
+                container.innerHTML = `<div class="p-8 bg-slate-950/60 rounded-2xl border border-slate-800 text-center text-slate-400 text-xs">Belum ada jadwal rapat rutin. Silakan tambahkan agenda melalui Dashboard.</div>`;
+                document.getElementById('pagination-info').innerText = "Menampilkan 0 dari 0 agenda";
+                document.getElementById('pagination-buttons').innerHTML = "";
+                return;
+            }
+
+            // Filter berdasarkan periode bulan jika dipilih
+            if (periodFilter !== 'all') {
+                meetings = meetings.filter(m => m.meeting_date && m.meeting_date.startsWith(periodFilter));
+            }
+
+            allMeetingsCache = meetings;
+            renderPagedMeetings();
+        }
+
+        async function renderPagedMeetings() {
+            const container = document.getElementById('meetings-list-container');
+            const totalItems = allMeetingsCache.length;
+
+            if (totalItems === 0) {
+                container.innerHTML = `<div class="p-8 bg-slate-950/60 rounded-2xl border border-slate-800 text-center text-slate-400 text-xs">Tidak ada agenda rapat untuk periode yang dipilih.</div>`;
+                document.getElementById('pagination-info').innerText = "Menampilkan 0 dari 0 agenda";
+                document.getElementById('pagination-buttons').innerHTML = "";
+                return;
+            }
+
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const currentMeetings = allMeetingsCache.slice(startIndex, endIndex);
+
+            container.innerHTML = '';
+            for (let m of currentMeetings) {
+                let { data: works } = await _supabase
+                    .from('work_plans')
+                    .select('*')
+                    .eq('meeting_id', m.id);
+
+                let workRows = '';
+                if (works && works.length > 0) {
+                    workRows = works.map(w => {
+                        let statusBadge = 'bg-slate-800 text-slate-300 border-slate-700';
+                        if (w.status === 'Dalam Proses') statusBadge = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                        if (w.status === 'Selesai') statusBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                        if (w.status === 'Batal') statusBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+
+                        return `
+                            <tr class="hover:bg-slate-900/40 transition">
+                                <td class="p-3 font-medium text-slate-200">${w.admin_notes || 'Staf'}</td>
+                                <td class="p-3 text-blue-400">${w.title}</td>
+                                <td class="p-3"><span class="border px-2.5 py-1 rounded-lg text-[10px] font-semibold ${statusBadge}">${w.status || 'Rencana Kerja'}</span></td>
+                                <td class="p-3 text-center">
+                                    <button onclick="openStatusModal('${w.id}')" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium underline underline-offset-2">Edit Status</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    workRows = `<tr><td colspan="4" class="p-4 text-center text-slate-500 text-xs">Belum ada rencana kerja terdaftar pada rapat ini.</td></tr>`;
+                }
+
+                container.innerHTML += `
+                    <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-6 space-y-4 shadow-xl">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800/80 pb-4 gap-3">
+                            <div>
+                                <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-full font-semibold">${m.meeting_number}</span>
+                                <h3 class="font-bold text-slate-100 text-sm mt-2">${m.title}</h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Tanggal: ${m.meeting_date} &bull; Agenda: ${m.agenda || '-'}</p>
+                            </div>
+                            <button onclick="openAddWorkModal('${m.id}')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3.5 py-2 rounded-xl transition shadow-md shadow-blue-600/20 font-medium flex items-center space-x-1.5 shrink-0">+ Tambah Rencana Kerja</button>
+                        </div>
+                        <div class="border border-slate-800/80 rounded-xl overflow-hidden bg-slate-900/40">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
+                                    <tr>
+                                        <th class="p-3">Personel / Staf</th>
+                                        <th class="p-3">Uraian Rencana / Katalog Pekerjaan</th>
+                                        <th class="p-3">Status</th>
+                                        <th class="p-3 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800/60">
+                                    ${workRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Render Info & Tombol Paginasi
+            document.getElementById('pagination-info').innerText = `Menampilkan agenda ${startIndex + 1} - ${Math.min(endIndex, totalItems)} dari total ${totalItems} agenda`;
+            
+            let btnHtml = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="px-3 py-1.5 rounded-xl bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed"' : 'class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"'}>Sebelumnya</button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    btnHtml += `<button class="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-semibold shadow-md shadow-blue-600/20">${i}</button>`;
+                } else {
+                    btnHtml += `<button onclick="changePage(${i})" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition">${i}</button>`;
+                }
+            }
+
+            btnHtml += `
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled class="px-3 py-1.5 rounded-xl bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed"' : 'class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"'}>Selanjutnya</button>
+            `;
+
+            document.getElementById('pagination-buttons').innerHTML = btnHtml;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderPagedMeetings();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openAddWorkModal(meetingId) {
+            document.getElementById('work-meeting-id').value = meetingId;
+            document.getElementById('modal-add-work').classList.remove('hidden');
+
+            const selPersonnel = document.getElementById('work-personnel');
+            selPersonnel.innerHTML = '<option value="">-- Pilih Nama Staf --</option>';
+            officialPersonnelList.forEach(name => {
+                selPersonnel.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+
+            document.getElementById('work-subunit').value = "";
+            const selCat = document.getElementById('work-category');
+            selCat.innerHTML = '<option value="">-- Pilih Subbagian Terlebih Dahulu --</option>';
+            document.getElementById('new-category-container').classList.add('hidden');
+        }
+
+        function onSubUnitChange() {
+            const subunit = document.getElementById('work-subunit').value;
+            const selCat = document.getElementById('work-category');
+            document.getElementById('new-category-container').classList.add('hidden');
+
+            if (!subunit || !subbagianCatalog[subunit]) {
+                selCat.innerHTML = '<option value="">-- Pilih Subbagian Terlebih Dahulu --</option>';
+                return;
+            }
+
+            selCat.innerHTML = '<option value="">-- Pilih Katalog Pekerjaan --</option>';
+            subbagianCatalog[subunit].forEach(item => {
+                selCat.innerHTML += `<option value="${item}">${item}</option>`;
+            });
+            selCat.innerHTML += `<option value="CUSTOM_NEW" class="text-amber-400 font-bold">+ [ Input Kategori / Pekerjaan Baru ]</option>`;
+        }
+
+        function onCategoryChange() {
+            const catVal = document.getElementById('work-category').value;
+            const newCatContainer = document.getElementById('new-category-container');
+            if (catVal === 'CUSTOM_NEW') {
+                newCatContainer.classList.remove('hidden');
+                document.getElementById('new-category-input').required = true;
+            } else {
+                newCatContainer.classList.add('hidden');
+                document.getElementById('new-category-input').required = false;
+            }
+        }
+
+        function closeAddWorkModal() {
+            document.getElementById('modal-add-work').classList.add('hidden');
+            document.getElementById('form-add-work').reset();
+            document.getElementById('new-category-container').classList.add('hidden');
+        }
+
+        async function submitWorkPlan(event) {
+            event.preventDefault();
+            const meeting_id = document.getElementById('work-meeting-id').value;
+            const personnel = document.getElementById('work-personnel').value;
+            const subunit = document.getElementById('work-subunit').value;
+            let category = document.getElementById('work-category').value;
+
+            if (category === 'CUSTOM_NEW') {
+                category = document.getElementById('new-category-input').value.trim();
+                if (!category) {
+                    showCustomAlert('Nama kategori baru tidak boleh kosong!', 'Perhatian', 'error');
+                    return;
+                }
+                if (subbagianCatalog[subunit] && !subbagianCatalog[subunit].includes(category)) {
+                    subbagianCatalog[subunit].push(category);
+                }
+            }
+
+            const title = document.getElementById('work-title').value;
+
+            const { error } = await _supabase.from('work_plans').insert({
+                sub_unit_id: currentUserProfile.sub_unit_id,
+                user_id: currentUserProfile.id,
+                meeting_id: meeting_id,
+                title: `[${subunit}] [${category}] ${title}`,
+                admin_notes: personnel,
+                status: 'Rencana Kerja'
+            });
+
+            if (error) {
+                showCustomAlert('Gagal menyimpan rencana kerja: ' + error.message, 'Kesalahan', 'error');
+                return;
+            }
+
+            showCustomAlert('Rencana kerja berhasil ditambahkan ke rapat!', 'Berhasil', 'success', () => {
+                closeAddWorkModal();
+                loadMeetings();
+            });
+        }
+
+        function openStatusModal(workId) {
+            document.getElementById('active-work-id').value = workId;
+            document.getElementById('modal-update-status').classList.remove('hidden');
+        }
+
+        function closeStatusModal() {
+            document.getElementById('modal-update-status').classList.add('hidden');
+        }
+
+        async function saveNewStatus(newStatus) {
+            const workId = document.getElementById('active-work-id').value;
+            closeStatusModal();
+
+            const { error } = await _supabase.from('work_plans').update({ status: newStatus }).eq('id', workId);
+            if (error) {
+                showCustomAlert('Gagal memperbarui status: ' + error.message, 'Kesalahan', 'error');
+                return;
+            }
+
+            showCustomAlert(`Status berhasil diubah menjadi "${newStatus}"!`, 'Berhasil', 'success', () => loadMeetings());
+        }
+
+        async function loadMeetingsCount() {
+            let { count } = await _supabase.from('meetings', { count: 'exact', head: true });
+            document.getElementById('txt-total-agenda').innerText = (count || 0) + ' Agenda';
+        }
+
+        async function loadSignupRequests() {
+            const tbody = document.getElementById('signup-requests-body');
+            tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500">Memuat data...</td></tr>`;
+
+            let { data, error } = await _supabase.from('signup_requests').select('*').eq('status', 'pending');
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500">Tidak ada permohonan akun tertunda.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(req => `
+                <tr class="hover:bg-slate-900/40 transition">
+                    <td class="p-3.5 font-medium text-slate-200">${req.full_name}</td>
+                    <td class="p-3.5 text-slate-400">${req.email}</td>
+                    <td class="p-3.5"><span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-lg text-[10px]">Pending</span></td>
+                    <td class="p-3.5 text-center">
+                        <button onclick="approveUser('${req.user_id}', '${req.email}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-medium transition shadow-sm">Setujui</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function approveUser(userId, email) {
+            await _supabase.from('profiles').update({ is_active: true, role: 'operator' }).eq('id', userId);
+            await _supabase.from('signup_requests').update({ status: 'approved' }).eq('user_id', userId);
+            showCustomAlert(`Akun ${email} berhasil disetujui sebagai Operator!`, 'Berhasil', 'success', () => loadSignupRequests());
+        }
+
         window.onload = () => {
             checkUserSession();
         };
