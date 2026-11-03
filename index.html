@@ -755,17 +755,39 @@
             const tbody = document.getElementById('signup-requests-body');
             tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Memuat data pengguna...</td></tr>`;
 
-            // Ambil semua profil dan data sub_units
+            // 1. Ambil data profil & subbagian
             let { data: profiles, error } = await _supabase
                 .from('profiles')
                 .select('*, sub_units(id, name)');
+
+            // 2. Ambil data signup_requests untuk mendapatkan email asli (text)
+            let { data: requests } = await _supabase
+                .from('signup_requests')
+                .select('user_id, email, status');
+
+            let emailMap = {};
+            if (requests) {
+                requests.forEach(r => {
+                    emailMap[r.user_id] = r.email;
+                });
+            }
 
             if (error || !profiles || profiles.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Tidak ada data pengguna ditemukan.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = profiles.map(p => {
+            // Saring agar akun 'super_admin' tidak ikut tampil di tabel manajemen
+            const filteredProfiles = profiles.filter(p => p.role !== 'super_admin');
+
+            if (filteredProfiles.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Tidak ada akun lain selain Super Admin.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredProfiles.map(p => {
+                let userEmail = emailMap[p.id] || p.id; // Gunakan email asli dari signup_requests jika ada
+
                 let statusBadge = p.is_active 
                     ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-[10px] font-semibold">Aktif</span>`
                     : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-lg text-[10px] font-semibold">Pending</span>`;
@@ -784,7 +806,7 @@
                 return `
                     <tr class="hover:bg-slate-900/40 transition">
                         <td class="p-3.5 font-medium text-slate-200">${p.full_name}</td>
-                        <td class="p-3.5 text-slate-400">${p.id}</td>
+                        <td class="p-3.5 text-slate-300 font-mono text-[11px]">${userEmail}</td>
                         <td class="p-3.5">${roleBadge} &bull; <span class="text-slate-300">${subunitName}</span></td>
                         <td class="p-3.5">${statusBadge}</td>
                         <td class="p-3.5 text-center whitespace-nowrap">${actionBtns}</td>
@@ -797,7 +819,6 @@
             document.getElementById('approve-user-id').value = userId;
             document.getElementById('approve-user-subtitle').innerText = `Tentukan role & subbagian untuk: ${fullName}`;
             
-            // Muat daftar subbagian dari database
             let { data: subUnits } = await _supabase.from('sub_units').select('*').order('name');
             const selSub = document.getElementById('approve-subunit');
             selSub.innerHTML = `<option value="">-- Pilih Subbagian --</option>`;
@@ -826,7 +847,6 @@
                 return;
             }
 
-            // Update profil di tabel profiles
             const { error } = await _supabase.from('profiles').update({
                 is_active: true,
                 role: role,
@@ -838,7 +858,6 @@
                 return;
             }
 
-            // Update signup_requests jika ada
             await _supabase.from('signup_requests').update({ status: 'approved' }).eq('user_id', userId);
 
             showCustomAlert('Akun berhasil disetujui dan diaktifkan!', 'Berhasil', 'success', () => {
@@ -859,7 +878,6 @@
         async function deleteUser(userId, fullName) {
             if (!confirm(`Apakah Anda yakin ingin menghapus akun "${fullName}" dari sistem?`)) return;
 
-            // Hapus dari signup_requests dan profiles
             await _supabase.from('signup_requests').delete().eq('user_id', userId);
             const { error } = await _supabase.from('profiles').delete().eq('id', userId);
 
