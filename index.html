@@ -118,7 +118,7 @@
             </div>
         </div>
 
-        <!-- 4. TAB 2: RAPAT RUTIN (Dengan Filter Periode & Paging) -->
+        <!-- 4. TAB 2: RAPAT RUTIN -->
         <div id="tab-rapat" class="hidden space-y-6">
             <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 gap-4">
@@ -140,9 +140,7 @@
                 <!-- Navigasi Paging -->
                 <div id="pagination-container" class="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-slate-800/80 gap-3 text-xs">
                     <span id="pagination-info" class="text-slate-400">Menampilkan 0 dari 0 agenda</span>
-                    <div id="pagination-buttons" class="flex items-center space-x-1.5">
-                        <!-- Tombol halaman digenerate via JS -->
-                    </div>
+                    <div id="pagination-buttons" class="flex items-center space-x-1.5"></div>
                 </div>
             </div>
         </div>
@@ -172,7 +170,7 @@
             <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
                 <div>
                     <h2 class="text-lg font-bold text-amber-400">Manajemen & Persetujuan Akun Pengguna</h2>
-                    <p class="text-xs text-slate-400 mt-1">Setujui atau kelola hak akses akun yang mendaftar ke sistem.</p>
+                    <p class="text-xs text-slate-400 mt-1">Kelola hak akses, status aktif, atau hapus akun pengguna yang terdaftar ke sistem.</p>
                 </div>
                 <div class="border border-slate-800 rounded-2xl overflow-hidden shadow-inner bg-slate-950/40">
                     <table class="w-full text-left text-xs">
@@ -180,13 +178,14 @@
                             <tr>
                                 <th class="p-3.5">Nama Pengguna</th>
                                 <th class="p-3.5">Email</th>
+                                <th class="p-3.5">Role / Subbagian</th>
                                 <th class="p-3.5">Status</th>
                                 <th class="p-3.5 text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="signup-requests-body" class="divide-y divide-slate-800/60">
                             <tr>
-                                <td colspan="4" class="p-6 text-center text-slate-500">Memuat permohonan...</td>
+                                <td colspan="5" class="p-6 text-center text-slate-500">Memuat data pengguna...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -219,6 +218,39 @@
         </div>
 
     </main>
+
+    <!-- CUSTOM PREMIUM MODAL: APPROVAL AKUN (ROLE & SUBBAGIAN) -->
+    <div id="modal-approve-user" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl shadow-black/80">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <div>
+                    <h3 class="font-bold text-slate-100 text-base">Persetujuan Akun Pengguna</h3>
+                    <p id="approve-user-subtitle" class="text-xs text-slate-400 mt-0.5">Tentukan role dan subbagian untuk akun ini</p>
+                </div>
+                <button onclick="closeApproveModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">&times;</button>
+            </div>
+            <form id="form-approve-user" onsubmit="submitApproveUser(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="approve-user-id">
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Tentukan Role / Hak Akses</label>
+                    <select id="approve-role" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                        <option value="operator">OP Subbagian (Operator)</option>
+                        <option value="admin_subunit">Admin Subbagian</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Tentukan Subbagian</label>
+                    <select id="approve-subunit" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                        <option value="">-- Pilih Subbagian --</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeApproveModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-xl transition font-medium">Batal</button>
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl transition font-medium shadow-lg shadow-emerald-600/30">Setujui & Aktifkan</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- CUSTOM PREMIUM MODAL: TAMBAH AGENDA RAPAT -->
     <div id="modal-add-agenda" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
@@ -405,9 +437,9 @@
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUserProfile = null;
-        let allMeetingsCache = []; // Cache data rapat untuk keperluan paging
+        let allMeetingsCache = [];
         let currentPage = 1;
-        const itemsPerPage = 2; // Menampilkan 2 agenda rapat per halaman (bisa disesuaikan)
+        const itemsPerPage = 2;
 
         function showCustomAlert(message, title = "Informasi", type = "info", callback = null) {
             const modal = document.getElementById('modal-custom-alert');
@@ -452,20 +484,38 @@
         // Katalog Pekerjaan Berdasarkan 4 Subbagian
         const subbagianCatalog = {
             "Rendatin": [
-                "Pemutakhiran Data Pemilih (Mutarlih)", "Evaluasi SAKIP", "Renja/RKA-K/L", "Renstra",
-                "Indikator Kinerja Utama – IKU", "Rencana Kinerja Tahunan – RKT", "Perjanjian Kinerja – PK KPU",
-                "Matriks Rencana Aksi Kinerja (RAK)", "LAKIP", "Pohon Kinerja – Cascading", "Evaluasi SAKIP/e-SAKIP", "e-LAPKIN KPU RI"
+                "Pemutakhiran Data Pemilih (Mutarlih)",
+                "Arsip dan Katalogisasi Dokumen Fisik (kertas)",
+                "Evaluasi SAKIP",
+                "Laporan Penyelenggaraan Tahapan Pemilu",
+                "Laporan Penyelenggaraan Tahapan Pilkada",
+                "DIM Sistem Informasi KPU",
+                "Revisi DJA",
+                "Revisi POK",
+                "Monev Bappenas",
+                "SMART DJA Kemenkeu",
+                "Renja/RKA-K/L",
+                "Renstra",
+                "Indikator Kinerja Utama – IKU",
+                "Rencana Kinerja Tahunan – RKT",
+                "Perjanjian Kinerja – PK KPU",
+                "Matriks Rencana Aksi Kinerja (RAK)",
+                "LAKIP",
+                "Pohon Kinerja – Cascading",
+                "Evaluasi SAKIP/e-SAKIP",
+                "e-LAPKIN KPU RI",
+                "Standar Pelayanan",
+                "Forum Konsultasi Publik (FKP)",
+                "Standar Operasional Prosedur – SOP",
+                "Reformasi Birokrasi (Kemenpan RB)",
+                "Survey Kepuasan Masyarakat (SKM)",
+                "Tindaklanjut dan Laporan Tindaklanjut Hasil Evaluasi SKM",
+                "PEKPPP Kemenpan RB",
+                "Perjanjian Kerjasama (PKS)"
             ],
-            "KUL": [
-                "Arsip dan Katalogisasi Dokumen Fisik", "Revisi DJA", "Revisi POK", "Monev Bappenas", "SMART DJA Kemenkeu"
-            ],
-            "Parmas & SDM": [
-                "DIM Sistem Informasi KPU", "Standar Pelayanan", "Forum Konsultasi Publik (FKP)", "Standar Operasional Prosedur – SOP",
-                "Reformasi Birokrasi (Kemenpan RB)", "Survey Kepuasan Masyarakat (SKM)", "Tindaklanjut Hasil Evaluasi SKM", "PEKPPP Kemenpan RB"
-            ],
-            "Teknis & Hukum": [
-                "Laporan Penyelenggaraan Tahapan Pemilu", "Laporan Penyelenggaraan Tahapan Pilkada"
-            ]
+            "KUL": [],
+            "Parmas & SDM": [],
+            "Teknis & Hukum": []
         };
 
         function switchTab(tabId) {
@@ -510,64 +560,61 @@
         }
 
         async function checkUserSession() {
-    const { data: { session } } = await _supabase.auth.getSession();
-    if (!session) {
-        showView('view-login');
-        return;
-    }
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) {
+                showView('view-login');
+                return;
+            }
 
-    let { data: profile } = await _supabase
-        .from('profiles')
-        .select('*, sub_units(name)')
-        .eq('id', session.user.id)
-        .single();
+            let { data: profile } = await _supabase
+                .from('profiles')
+                .select('*, sub_units(name)')
+                .eq('id', session.user.id)
+                .single();
 
-    // Jika user baru login pertama kali dan belum ada di tabel profiles
-    if (!profile) {
-        const fullName = session.user.user_metadata.full_name || session.user.user_metadata.name || 'Pengguna Baru';
-        
-        // 1. Buat data di tabel profiles
-        await _supabase.from('profiles').insert({
-            id: session.user.id,
-            full_name: fullName,
-            role: 'operator',
-            is_active: false
-        });
+            if (!profile) {
+                const fullName = session.user.user_metadata.full_name || session.user.user_metadata.name || 'Pengguna Baru';
+                
+                await _supabase.from('profiles').insert({
+                    id: session.user.id,
+                    full_name: fullName,
+                    role: 'operator',
+                    is_active: false
+                });
 
-        // 2. Buat data permohonan di tabel signup_requests
-        await _supabase.from('signup_requests').insert({
-            user_id: session.user.id,
-            email: session.user.email,
-            full_name: fullName,
-            status: 'pending'
-        });
+                await _supabase.from('signup_requests').insert({
+                    user_id: session.user.id,
+                    email: session.user.email,
+                    full_name: fullName,
+                    status: 'pending'
+                });
 
-        showView('view-pending');
-        return;
-    }
+                showView('view-pending');
+                return;
+            }
 
-    if (!profile.is_active) {
-        showView('view-pending');
-        return;
-    }
+            if (!profile.is_active) {
+                showView('view-pending');
+                return;
+            }
 
-    currentUserProfile = profile;
-    showView('view-dashboard');
+            currentUserProfile = profile;
+            showView('view-dashboard');
 
-    document.getElementById('user-nav').classList.remove('hidden');
-    document.getElementById('app-nav').classList.remove('hidden');
-    document.getElementById('user-name-display').innerText = profile.full_name;
-    document.getElementById('badge-role-nav').innerText = profile.role.toUpperCase();
-    document.getElementById('badge-role').innerText = profile.role.toUpperCase();
-    document.getElementById('txt-subunit').innerText = profile.sub_units ? profile.sub_units.name : 'Sekretariat KPU Kabupaten Soppeng';
+            document.getElementById('user-nav').classList.remove('hidden');
+            document.getElementById('app-nav').classList.remove('hidden');
+            document.getElementById('user-name-display').innerText = profile.full_name;
+            document.getElementById('badge-role-nav').innerText = profile.role.toUpperCase();
+            document.getElementById('badge-role').innerText = profile.role.toUpperCase();
+            document.getElementById('txt-subunit').innerText = profile.sub_units ? profile.sub_units.name : 'Sekretariat KPU Kabupaten Soppeng';
 
-    if (profile.role === 'super_admin') {
-        document.getElementById('btn-add-agenda').classList.remove('hidden');
-        document.getElementById('nav-admin-users').classList.remove('hidden');
-    }
+            if (profile.role === 'super_admin') {
+                document.getElementById('btn-add-agenda').classList.remove('hidden');
+                document.getElementById('nav-admin-users').classList.remove('hidden');
+            }
 
-    loadMeetingsCount();
-}
+            loadMeetingsCount();
+        }
 
         function showView(viewId) {
             ['view-login', 'view-pending', 'view-dashboard'].forEach(id => {
@@ -703,6 +750,127 @@
             });
         }
 
+        // --- MANAJEMEN AKUN & PENGGUNA ---
+        async function loadSignupRequests() {
+            const tbody = document.getElementById('signup-requests-body');
+            tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Memuat data pengguna...</td></tr>`;
+
+            // Ambil semua profil dan data sub_units
+            let { data: profiles, error } = await _supabase
+                .from('profiles')
+                .select('*, sub_units(id, name)');
+
+            if (error || !profiles || profiles.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Tidak ada data pengguna ditemukan.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = profiles.map(p => {
+                let statusBadge = p.is_active 
+                    ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-[10px] font-semibold">Aktif</span>`
+                    : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-lg text-[10px] font-semibold">Pending</span>`;
+                
+                let subunitName = p.sub_units ? p.sub_units.name : '<span class="text-slate-500 italic">Belum ditentukan</span>';
+                let roleBadge = `<span class="text-blue-400 font-medium">${p.role.toUpperCase()}</span>`;
+
+                let actionBtns = '';
+                if (!p.is_active) {
+                    actionBtns += `<button onclick="openApproveModal('${p.id}', '${p.full_name}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-medium transition shadow-sm mr-2">Setujui</button>`;
+                } else {
+                    actionBtns += `<button onclick="toggleUserStatus('${p.id}', false)" class="bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-medium transition mr-2">Nonaktifkan</button>`;
+                }
+                actionBtns += `<button onclick="deleteUser('${p.id}', '${p.full_name}')" class="bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 px-3 py-1.5 rounded-xl text-xs font-medium transition">Hapus</button>`;
+
+                return `
+                    <tr class="hover:bg-slate-900/40 transition">
+                        <td class="p-3.5 font-medium text-slate-200">${p.full_name}</td>
+                        <td class="p-3.5 text-slate-400">${p.id}</td>
+                        <td class="p-3.5">${roleBadge} &bull; <span class="text-slate-300">${subunitName}</span></td>
+                        <td class="p-3.5">${statusBadge}</td>
+                        <td class="p-3.5 text-center whitespace-nowrap">${actionBtns}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function openApproveModal(userId, fullName) {
+            document.getElementById('approve-user-id').value = userId;
+            document.getElementById('approve-user-subtitle').innerText = `Tentukan role & subbagian untuk: ${fullName}`;
+            
+            // Muat daftar subbagian dari database
+            let { data: subUnits } = await _supabase.from('sub_units').select('*').order('name');
+            const selSub = document.getElementById('approve-subunit');
+            selSub.innerHTML = `<option value="">-- Pilih Subbagian --</option>`;
+            if (subUnits) {
+                subUnits.forEach(su => {
+                    selSub.innerHTML += `<option value="${su.id}">${su.name}</option>`;
+                });
+            }
+
+            document.getElementById('modal-approve-user').classList.remove('hidden');
+        }
+
+        function closeApproveModal() {
+            document.getElementById('modal-approve-user').classList.add('hidden');
+            document.getElementById('form-approve-user').reset();
+        }
+
+        async function submitApproveUser(event) {
+            event.preventDefault();
+            const userId = document.getElementById('approve-user-id').value;
+            const role = document.getElementById('approve-role').value;
+            const sub_unit_id = document.getElementById('approve-subunit').value;
+
+            if (!sub_unit_id) {
+                showCustomAlert('Silakan pilih subbagian terlebih dahulu!', 'Perhatian', 'error');
+                return;
+            }
+
+            // Update profil di tabel profiles
+            const { error } = await _supabase.from('profiles').update({
+                is_active: true,
+                role: role,
+                sub_unit_id: sub_unit_id
+            }).eq('id', userId);
+
+            if (error) {
+                showCustomAlert('Gagal menyetujui akun: ' + error.message, 'Kesalahan', 'error');
+                return;
+            }
+
+            // Update signup_requests jika ada
+            await _supabase.from('signup_requests').update({ status: 'approved' }).eq('user_id', userId);
+
+            showCustomAlert('Akun berhasil disetujui dan diaktifkan!', 'Berhasil', 'success', () => {
+                closeApproveModal();
+                loadSignupRequests();
+            });
+        }
+
+        async function toggleUserStatus(userId, makeActive) {
+            const { error } = await _supabase.from('profiles').update({ is_active: makeActive }).eq('id', userId);
+            if (error) {
+                showCustomAlert('Gagal mengubah status akun: ' + error.message, 'Kesalahan', 'error');
+                return;
+            }
+            showCustomAlert('Status akun berhasil diperbarui!', 'Berhasil', 'success', () => loadSignupRequests());
+        }
+
+        async function deleteUser(userId, fullName) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus akun "${fullName}" dari sistem?`)) return;
+
+            // Hapus dari signup_requests dan profiles
+            await _supabase.from('signup_requests').delete().eq('user_id', userId);
+            const { error } = await _supabase.from('profiles').delete().eq('id', userId);
+
+            if (error) {
+                showCustomAlert('Gagal menghapus akun: ' + error.message, 'Kesalahan', 'error');
+                return;
+            }
+
+            showCustomAlert('Akun berhasil dihapus dari sistem.', 'Berhasil', 'success', () => loadSignupRequests());
+        }
+
         // --- INISIALISASI & LOGIKA PAGING PADA TAB RAPAT ---
         async function initRapatTab() {
             currentPage = 1;
@@ -740,7 +908,7 @@
         }
 
         function onPeriodFilterChange() {
-            currentPage = 1; // Reset ke halaman 1 saat filter bulan diubah
+            currentPage = 1;
             loadMeetings();
         }
 
@@ -762,7 +930,6 @@
                 return;
             }
 
-            // Filter berdasarkan periode bulan jika dipilih
             if (periodFilter !== 'all') {
                 meetings = meetings.filter(m => m.meeting_date && m.meeting_date.startsWith(periodFilter));
             }
@@ -849,7 +1016,6 @@
                 `;
             }
 
-            // Render Info & Tombol Paginasi
             document.getElementById('pagination-info').innerText = `Menampilkan agenda ${startIndex + 1} - ${Math.min(endIndex, totalItems)} dari total ${totalItems} agenda`;
             
             let btnHtml = `
@@ -993,34 +1159,6 @@
         async function loadMeetingsCount() {
             let { count } = await _supabase.from('meetings', { count: 'exact', head: true });
             document.getElementById('txt-total-agenda').innerText = (count || 0) + ' Agenda';
-        }
-
-        async function loadSignupRequests() {
-            const tbody = document.getElementById('signup-requests-body');
-            tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500">Memuat data...</td></tr>`;
-
-            let { data, error } = await _supabase.from('signup_requests').select('*').eq('status', 'pending');
-            if (error || !data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500">Tidak ada permohonan akun tertunda.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = data.map(req => `
-                <tr class="hover:bg-slate-900/40 transition">
-                    <td class="p-3.5 font-medium text-slate-200">${req.full_name}</td>
-                    <td class="p-3.5 text-slate-400">${req.email}</td>
-                    <td class="p-3.5"><span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-lg text-[10px]">Pending</span></td>
-                    <td class="p-3.5 text-center">
-                        <button onclick="approveUser('${req.user_id}', '${req.email}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-medium transition shadow-sm">Setujui</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        async function approveUser(userId, email) {
-            await _supabase.from('profiles').update({ is_active: true, role: 'operator' }).eq('id', userId);
-            await _supabase.from('signup_requests').update({ status: 'approved' }).eq('user_id', userId);
-            showCustomAlert(`Akun ${email} berhasil disetujui sebagai Operator!`, 'Berhasil', 'success', () => loadSignupRequests());
         }
 
         window.onload = () => {
