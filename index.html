@@ -155,7 +155,7 @@
             </div>
         </div>
 
-        <!-- 6. TAB 4: ARSIP -->
+        <!-- 6. TAB 4: ARsip -->
         <div id="tab-arsip" class="hidden space-y-6">
             <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
                 <h2 class="text-lg font-bold text-slate-100">Arsip & Riwayat Rapat</h2>
@@ -750,22 +750,22 @@
             });
         }
 
-        // --- MANAJEMEN AKUN & PENGGUNA ---
+        // --- MANAJEMEN AKUN & PENGGUNA (DIAMANKAN & DISINKRONKAN) ---
         async function loadSignupRequests() {
             const tbody = document.getElementById('signup-requests-body');
             tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Memuat data pengguna...</td></tr>`;
 
-            // 1. Ambil data dari tabel profiles
+            // 1. Ambil data signup_requests
+            let { data: requests, error: reqError } = await _supabase
+                .from('signup_requests')
+                .select('*');
+
+            // 2. Ambil data profiles
             let { data: profiles, error: profError } = await _supabase
                 .from('profiles')
                 .select('*');
 
-            // 2. Ambil data dari signup_requests untuk mendapatkan email asli (text)
-            let { data: requests } = await _supabase
-                .from('signup_requests')
-                .select('user_id, email, status');
-
-            // 3. Ambil data sub_units untuk mendapatkan nama subbagian
+            // 3. Ambil data sub_units
             let { data: subUnits } = await _supabase
                 .from('sub_units')
                 .select('id, name');
@@ -777,48 +777,61 @@
                 });
             }
 
-            let emailMap = {};
-            if (requests) {
-                requests.forEach(r => {
-                    emailMap[r.user_id] = r.email;
+            let profileMap = {};
+            if (profiles) {
+                profiles.forEach(p => {
+                    profileMap[p.id] = p;
                 });
             }
 
-            if (profError || !profiles || profiles.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Tidak ada data pengguna ditemukan.</td></tr>`;
+            if (reqError || profError) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-rose-400">Gagal memuat data dari database.</td></tr>`;
                 return;
             }
 
-            // Saring agar akun 'super_admin' tidak ikut tampil di tabel manajemen
-            const filteredProfiles = profiles.filter(p => p.role !== 'super_admin');
+            if (!requests || requests.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Tidak ada permohonan akun terdaftar.</td></tr>`;
+                return;
+            }
 
-            if (filteredProfiles.length === 0) {
+            // Saring agar akun 'super_admin' milik Anda tidak ikut tampil
+            const filteredRequests = requests.filter(r => {
+                let prof = profileMap[r.user_id];
+                return !prof || prof.role !== 'super_admin';
+            });
+
+            if (filteredRequests.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Tidak ada akun lain selain Super Admin.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = filteredProfiles.map(p => {
-                let userEmail = emailMap[p.id] || p.id;
-                let subunitName = subUnitMap[p.sub_unit_id] ? subUnitMap[p.sub_unit_id] : '<span class="text-slate-500 italic">Belum ditentukan</span>';
-                let roleBadge = `<span class="text-blue-400 font-medium">${p.role.toUpperCase()}</span>`;
-
-                let statusBadge = p.is_active 
+            tbody.innerHTML = filteredRequests.map(r => {
+                let prof = profileMap[r.user_id] || {};
+                let fullName = r.full_name || prof.full_name || 'Tanpa Nama';
+                let userEmail = r.email || '-';
+                let role = prof.role ? prof.role.toUpperCase() : 'PENDING';
+                let subunitName = subUnitMap[prof.sub_unit_id] ? subUnitMap[prof.sub_unit_id] : '<span class="text-slate-500 italic">Belum ditentukan</span>';
+                
+                let isActive = prof.is_active || false;
+                let statusBadge = isActive 
                     ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-[10px] font-semibold">Aktif</span>`
-                    : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-lg text-[10px] font-semibold">Pending</span>`;
+                    : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-lg text-[10px] font-semibold">${r.status || 'Pending'}</span>`;
 
                 let actionBtns = '';
-                if (!p.is_active) {
-                    actionBtns += `<button onclick="openApproveModal('${p.id}', '${p.full_name}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-medium transition shadow-sm mr-2">Setujui</button>`;
+                let userId = r.user_id;
+
+                if (!isActive) {
+                    actionBtns += `<button onclick="openApproveModal('${userId}', '${fullName}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-medium transition shadow-sm mr-2">Setujui</button>`;
                 } else {
-                    actionBtns += `<button onclick="toggleUserStatus('${p.id}', false)" class="bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-medium transition mr-2">Nonaktifkan</button>`;
+                    actionBtns += `<button onclick="toggleUserStatus('${userId}', false)" class="bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-medium transition mr-2">Nonaktifkan</button>`;
                 }
-                actionBtns += `<button onclick="deleteUser('${p.id}', '${p.full_name}')" class="bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 px-3 py-1.5 rounded-xl text-xs font-medium transition">Hapus</button>`;
+                actionBtns += `<button onclick="deleteUser('${userId}', '${fullName}')" class="bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 px-3 py-1.5 rounded-xl text-xs font-medium transition">Hapus</button>`;
 
                 return `
                     <tr class="hover:bg-slate-900/40 transition">
-                        <td class="p-3.5 font-medium text-slate-200">${p.full_name}</td>
+                        <td class="p-3.5 font-medium text-slate-200">${fullName}</td>
                         <td class="p-3.5 text-slate-300 font-mono text-[11px]">${userEmail}</td>
-                        <td class="p-3.5">${roleBadge} &bull; <span class="text-slate-300">${subunitName}</span></td>
+                        <td class="p-3.5"><span class="text-blue-400 font-medium">${role}</span> &bull; <span class="text-slate-300">${subunitName}</span></td>
                         <td class="p-3.5">${statusBadge}</td>
                         <td class="p-3.5 text-center whitespace-nowrap">${actionBtns}</td>
                     </tr>
@@ -858,14 +871,16 @@
                 return;
             }
 
-            const { error } = await _supabase.from('profiles').update({
+            // Update atau Insert ke profiles
+            const { error: profError } = await _supabase.from('profiles').upsert({
+                id: userId,
                 is_active: true,
                 role: role,
                 sub_unit_id: sub_unit_id
-            }).eq('id', userId);
+            });
 
-            if (error) {
-                showCustomAlert('Gagal menyetujui akun: ' + error.message, 'Kesalahan', 'error');
+            if (profError) {
+                showCustomAlert('Gagal menyetujui akun: ' + profError.message, 'Kesalahan', 'error');
                 return;
             }
 
@@ -890,12 +905,7 @@
             if (!confirm(`Apakah Anda yakin ingin menghapus akun "${fullName}" dari sistem?`)) return;
 
             await _supabase.from('signup_requests').delete().eq('user_id', userId);
-            const { error } = await _supabase.from('profiles').delete().eq('id', userId);
-
-            if (error) {
-                showCustomAlert('Gagal menghapus akun: ' + error.message, 'Kesalahan', 'error');
-                return;
-            }
+            await _supabase.from('profiles').delete().eq('id', userId);
 
             showCustomAlert('Akun berhasil dihapus dari sistem.', 'Berhasil', 'success', () => loadSignupRequests());
         }
