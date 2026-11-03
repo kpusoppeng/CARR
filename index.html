@@ -732,7 +732,7 @@
         };
 
         function switchTab(tabId) {
-            if (currentUserProfile && currentUserProfile.role && currentUserProfile.role.toString().toLowerCase().includes('admin')) {
+            if (currentUserProfile && currentUserProfile.role && currentUserProfile.role.toString().toLowerCase() === 'super_admin') {
                 const navAdmin = document.getElementById('nav-admin-users');
                 if (navAdmin) navAdmin.classList.remove('hidden');
             }
@@ -838,12 +838,16 @@
             document.getElementById('badge-role').innerText = formattedRole;
             document.getElementById('txt-subunit').innerText = profile.sub_units ? profile.sub_units.name : 'Sekretariat KPU Kabupaten Soppeng';
 
-            if (profile.role && profile.role.toString().toLowerCase().includes('admin')) {
+            if (profile.role && profile.role.toString().toLowerCase() === 'super_admin') {
                 const btnAddAgenda = document.getElementById('btn-add-agenda');
                 if (btnAddAgenda) btnAddAgenda.classList.remove('hidden');
                 
                 const navAdmin = document.getElementById('nav-admin-users');
                 if (navAdmin) navAdmin.classList.remove('hidden');
+            } else if (profile.role && profile.role.toString().toLowerCase() === 'admin_subunit') {
+                // Admin Subbagian hanya dapat tombol tambah agenda, tapi TIDAK bisa akses menu Manajemen App
+                const btnAddAgenda = document.getElementById('btn-add-agenda');
+                if (btnAddAgenda) btnAddAgenda.classList.remove('hidden');
             }
 
             loadMeetingsCount();
