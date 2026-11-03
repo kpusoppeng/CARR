@@ -362,7 +362,7 @@
             <div class="flex justify-between items-center border-b border-slate-800 pb-4">
                 <div>
                     <h3 class="font-bold text-slate-100 text-base">Tambah Rencana Kerja Rapat</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Pilih personel, subbagian, dan katalog pekerjaan</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Pilih personel, subbagian, katalog pekerjaan, dan status</p>
                 </div>
                 <button onclick="closeAddWorkModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">&times;</button>
             </div>
@@ -395,6 +395,15 @@
                     <input type="text" id="new-category-input" placeholder="Masukkan nama kategori baru..." class="w-full bg-slate-950 border border-amber-500/40 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-amber-500 transition shadow-inner">
                 </div>
                 <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Status Awal Pekerjaan</label>
+                    <select id="work-status" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                        <option value="Rencana Kerja">📌 Rencana Kerja</option>
+                        <option value="Dalam Proses">⏳ Dalam Proses</option>
+                        <option value="Selesai">✅ Selesai</option>
+                        <option value="Batal">❌ Batal</option>
+                    </select>
+                </div>
+                <div>
                     <label class="block text-slate-300 font-medium mb-1.5">Uraian Rencana Kerja / Catatan</label>
                     <textarea id="work-title" required rows="3" placeholder="Masukkan uraian rencana kerja..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner"></textarea>
                 </div>
@@ -406,38 +415,42 @@
         </div>
     </div>
 
-    <!-- CUSTOM PREMIUM MODAL: UPDATE STATUS REALISASI -->
-    <div id="modal-update-status" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl shadow-black/80">
+    <!-- CUSTOM PREMIUM MODAL: EDIT RENCANA KERJA -->
+    <div id="modal-edit-work" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-5 shadow-2xl shadow-black/80 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-4">
                 <div>
-                    <h3 class="font-bold text-slate-100 text-base">Pembaruan Status Realisasi</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Pilih status progres pekerjaan saat ini</p>
+                    <h3 class="font-bold text-slate-100 text-base">Edit Rencana Kerja Rapat</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Perbarui informasi, status, atau uraian rencana kerja</p>
                 </div>
-                <button onclick="closeStatusModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">&times;</button>
+                <button onclick="closeEditWorkModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">&times;</button>
             </div>
-            <input type="hidden" id="active-work-id">
-            <div class="space-y-2.5 text-xs">
-                <button onclick="saveNewStatus('Rencana Kerja')" class="w-full text-left p-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-200 font-medium transition flex items-center justify-between">
-                    <span>📌 Rencana Kerja</span>
-                    <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Default</span>
-                </button>
-                <button onclick="saveNewStatus('Dalam Proses')" class="w-full text-left p-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 text-amber-400 font-medium transition flex items-center justify-between">
-                    <span>⏳ Dalam Proses</span>
-                    <span class="text-[10px] text-amber-400/80 bg-amber-500/10 px-2 py-0.5 rounded">Progres</span>
-                </button>
-                <button onclick="saveNewStatus('Selesai')" class="w-full text-left p-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 text-emerald-400 font-medium transition flex items-center justify-between">
-                    <span>✅ Selesai</span>
-                    <span class="text-[10px] text-emerald-400/80 bg-emerald-500/10 px-2 py-0.5 rounded">Tuntas</span>
-                </button>
-                <button onclick="saveNewStatus('Batal')" class="w-full text-left p-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-rose-500/40 text-rose-400 font-medium transition flex items-center justify-between">
-                    <span>❌ Batal</span>
-                    <span class="text-[10px] text-rose-400/80 bg-rose-500/10 px-2 py-0.5 rounded">Dibatalkan</span>
-                </button>
-            </div>
-            <div class="pt-2">
-                <button onclick="closeStatusModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-medium transition">Tutup</button>
-            </div>
+            <form id="form-edit-work" onsubmit="submitEditWorkPlan(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="edit-work-id">
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Personel / Nama Staf</label>
+                    <select id="edit-work-personnel" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                        <option value="">-- Pilih Nama Staf --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Status Pekerjaan</label>
+                    <select id="edit-work-status" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner">
+                        <option value="Rencana Kerja">📌 Rencana Kerja</option>
+                        <option value="Dalam Proses">⏳ Dalam Proses</option>
+                        <option value="Selesai">✅ Selesai</option>
+                        <option value="Batal">❌ Batal</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">Uraian Rencana Kerja / Catatan</label>
+                    <textarea id="edit-work-title" required rows="4" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-blue-500 transition shadow-inner"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeEditWorkModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-xl transition font-medium">Batal</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl transition font-medium shadow-lg shadow-blue-600/30">Simpan Perubahan</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1145,22 +1158,16 @@
                         if (w.status === 'Selesai') statusBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
                         if (w.status === 'Batal') statusBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
 
-                        // Cek hak akses: Admin Subbagian bisa ubah/hapus semua di subbagiannya. OP hanya miliknya sendiri.
                         let isOwner = (w.user_id === currentUserProfile.id);
                         let isAdminSub = (currentUserProfile.role === 'admin_subunit' || currentUserProfile.role === 'super_admin');
                         let canModify = isAdminSub || isOwner;
 
-                        // Tombol Edit Status: OP hanya bisa edit status miliknya sendiri, Admin Subbagian bisa semua
                         let actionButtons = '';
                         if (canModify) {
-                            actionButtons += `<button onclick="openStatusModal('${w.id}')" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium underline underline-offset-2">Edit Status</button>`;
+                            actionButtons += `<button onclick="openEditWorkModal('${w.id}', '${encodeURIComponent(w.admin_notes || '')}', '${encodeURIComponent(w.status || 'Rencana Kerja')}', '${encodeURIComponent(w.title || '')}')" class="text-xs text-amber-400 hover:text-amber-300 font-medium underline underline-offset-2">Edit</button>`;
+                            actionButtons += ` <span class="text-slate-600">|</span> <button onclick="deleteWorkPlan('${w.id}')" class="text-xs text-rose-400 hover:text-rose-300 font-medium underline underline-offset-2">Hapus</button>`;
                         } else {
                             actionButtons += `<span class="text-xs text-slate-500 italic">Hanya Lihat</span>`;
-                        }
-                        
-                        // Tombol Hapus: Hanya muncul jika Admin Subbagian atau pemilik asli rencana kerja tersebut
-                        if (canModify) {
-                            actionButtons += ` <span class="text-slate-600">|</span> <button onclick="deleteWorkPlan('${w.id}')" class="text-xs text-rose-400 hover:text-rose-300 font-medium underline underline-offset-2">Hapus</button>`;
                         }
 
                         return `
@@ -1245,6 +1252,7 @@
             });
 
             document.getElementById('work-subunit').value = "";
+            document.getElementById('work-status').value = "Rencana Kerja";
             const selCat = document.getElementById('work-category');
             selCat.innerHTML = '<option value="">-- Pilih Subbagian Terlebih Dahulu --</option>';
             document.getElementById('new-category-container').classList.add('hidden');
@@ -1291,6 +1299,7 @@
             const personnel = document.getElementById('work-personnel').value;
             const subunit = document.getElementById('work-subunit').value;
             let category = document.getElementById('work-category').value;
+            const status = document.getElementById('work-status').value;
 
             if (category === 'CUSTOM_NEW') {
                 category = document.getElementById('new-category-input').value.trim();
@@ -1311,7 +1320,7 @@
                 meeting_id: meeting_id,
                 title: `[${subunit}] [${category}] ${title}`,
                 admin_notes: personnel,
-                status: 'Rencana Kerja'
+                status: status
             });
 
             if (error) {
@@ -1325,26 +1334,48 @@
             });
         }
 
-        function openStatusModal(workId) {
-            document.getElementById('active-work-id').value = workId;
-            document.getElementById('modal-update-status').classList.remove('hidden');
+        function openEditWorkModal(workId, currentPersonnel, currentStatus, currentTitle) {
+            document.getElementById('edit-work-id').value = workId;
+            document.getElementById('edit-work-status').value = decodeURIComponent(currentStatus);
+            document.getElementById('edit-work-title').value = decodeURIComponent(currentTitle);
+
+            const selPersonnel = document.getElementById('edit-work-personnel');
+            selPersonnel.innerHTML = '<option value="">-- Pilih Nama Staf --</option>';
+            officialPersonnelList.forEach(name => {
+                let selected = (name === decodeURIComponent(currentPersonnel)) ? 'selected' : '';
+                selPersonnel.innerHTML += `<option value="${name}" ${selected}>${name}</option>`;
+            });
+
+            document.getElementById('modal-edit-work').classList.remove('hidden');
         }
 
-        function closeStatusModal() {
-            document.getElementById('modal-update-status').classList.add('hidden');
+        function closeEditWorkModal() {
+            document.getElementById('modal-edit-work').classList.add('hidden');
+            document.getElementById('form-edit-work').reset();
         }
 
-        async function saveNewStatus(newStatus) {
-            const workId = document.getElementById('active-work-id').value;
-            closeStatusModal();
+        async function submitEditWorkPlan(event) {
+            event.preventDefault();
+            const workId = document.getElementById('edit-work-id').value;
+            const personnel = document.getElementById('edit-work-personnel').value;
+            const status = document.getElementById('edit-work-status').value;
+            const title = document.getElementById('edit-work-title').value;
 
-            const { error } = await _supabase.from('work_plans').update({ status: newStatus }).eq('id', workId);
+            const { error } = await _supabase.from('work_plans').update({
+                admin_notes: personnel,
+                status: status,
+                title: title
+            }).eq('id', workId);
+
             if (error) {
-                showCustomAlert('Gagal memperbarui status: ' + error.message, 'Kesalahan', 'error');
+                showCustomAlert('Gagal memperbarui rencana kerja: ' + error.message, 'Kesalahan', 'error');
                 return;
             }
 
-            showCustomAlert(`Status berhasil diubah menjadi "${newStatus}"!`, 'Berhasil', 'success', () => loadMeetings());
+            showCustomAlert('Rencana kerja berhasil diperbarui!', 'Berhasil', 'success', () => {
+                closeEditWorkModal();
+                loadMeetings();
+            });
         }
 
         async function loadMeetingsCount() {
