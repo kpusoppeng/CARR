@@ -1,0 +1,31 @@
+name: Supabase Keep-Alive Ping
+
+on:
+  schedule:
+    # Dijalankan otomatis setiap 3 hari sekali pada pukul 00:00 UTC
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Memungkinkan Anda melakukan ping manual dari tab Actions di GitHub
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "Memulai ping ke Supabase..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/meetings?select=id&limit=1")
+
+          echo "HTTP Status Response: $response"
+          if [ "$response" -eq 200 ] || [ "$response" -eq 206 ]; then
+            echo "Ping berhasil! Supabase aktif."
+          else
+            echo "Peringatan: Menerima status kode $response"
+            exit 1
+          fi
+          
